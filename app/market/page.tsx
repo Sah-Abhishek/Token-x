@@ -59,7 +59,7 @@ export default function Home() {
     // Fetch cryptocurrencies data from the API
     async function fetchCryptos() {
       try {
-        const res = await fetch('http://localhost:3000/api/cryptos');
+        const res = await fetch('/api/cryptos');
         if (!res.ok) {
           throw new Error('Failed to fetch cryptocurrencies');
         }

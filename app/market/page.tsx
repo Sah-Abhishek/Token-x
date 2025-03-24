@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { FaChartLine as ChartIcon } from 'react-icons/fa6';
 import { useState, useEffect } from 'react';
@@ -18,14 +18,43 @@ type Crypto = {
   volume: string;
   image: string;
 };
+type CryptoConverted = {
+  id: string;
+  name: string;
+  symbol: string;
+  price: number;
+  change: number; // Converted to number
+  marketCap: number; // Converted to number
+  volume: number; // Converted to number
+  image: string;
+};
 
 export default function Home() {
-  const [cryptocurrencies, setCryptocurrencies] = useState<Crypto[]>([]);
+  const [cryptocurrencies, setCryptocurrencies] = useState<CryptoConverted[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('Market Cap');
   const [filterBy, setFilterBy] = useState<string>('All Coins');
   const [isLoading, setLoading] = useState<boolean>(false);
 
+  // Helper function to clean and convert market cap and volume to numbers
+  const cleanAndConvert = (value: string): number => {
+    if (!value) return 0;
+
+    // Remove non-numeric characters except for . and -
+    let cleanedValue = value.replace(/[^0-9.-]+/g, '');
+
+    // Convert cleaned value to a number first before applying the logic
+    let numericValue = parseFloat(cleanedValue);
+
+    // Check if it's in billions (B) or millions (M) and multiply accordingly
+    if (value.includes('B')) {
+      numericValue *= 1e9; // Convert to number and multiply by 1 billion
+    } else if (value.includes('M')) {
+      numericValue *= 1e6; // Convert to number and multiply by 1 million
+    }
+
+    return isNaN(numericValue) ? 0 : numericValue; // Return 0 if it's not a valid number
+  };
   useEffect(() => {
     // Fetch cryptocurrencies data from the API
     async function fetchCryptos() {
@@ -37,14 +66,14 @@ export default function Home() {
         const data: Crypto[] = await res.json();
 
         // Convert change, marketCap, and volume to numbers
-        const updatedData = data.map(crypto => ({
+        const updatedData: CryptoConverted[] = data.map(crypto => ({
           ...crypto,
           change: parseFloat(crypto.change) || 0, // Convert to number or 0 if invalid
-          marketCap: parseFloat(crypto.marketCap.replace(/[^0-9.-]+/g, "")) || 0, // Remove non-numeric characters like commas
-          volume: parseFloat(crypto.volume.replace(/[^0-9.-]+/g, "")) || 0, // Same as above
+          marketCap: cleanAndConvert(crypto.marketCap), // Clean and convert marketCap
+          volume: cleanAndConvert(crypto.volume), // Clean and convert volume
         }));
-        // @ts-expect-error
-        setCryptocurrencies(updatedData); // Set the cryptocurrencies state
+
+        setCryptocurrencies(updatedData); // Set the cleaned data in state
       } catch (error) {
         console.error('There was an error fetching the data:', error);
       } finally {
@@ -67,14 +96,11 @@ export default function Home() {
       case 'Price':
         return b.price - a.price;
       case '24h Change':
-        // @ts-expect-error
         return b.change - a.change;
       case 'Volume':
-        // @ts-expect-error
         return b.volume - a.volume;
       case 'Market Cap':
       default:
-        // @ts-expect-error
         return b.marketCap - a.marketCap;
     }
   });
@@ -101,8 +127,8 @@ export default function Home() {
             <span>
               <ChartIcon className='mr-2' />
             </span>
-
-            Live Crypto Market Prices</h1>
+            Live Crypto Market Prices
+          </h1>
           <p className="text-gray-600">Track real-time prices and trends of top cryptocurrencies.</p>
         </div>
 
@@ -150,7 +176,6 @@ export default function Home() {
           </div>
         </div>
 
-
         {/* Crypto Table */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           {isLoading ? (
@@ -190,12 +215,10 @@ export default function Home() {
                   ))}
                 </tbody>
               </table>
-
             </div>
           )}
         </div>
-
-      </main >
+      </main>
 
       <div className="mt-16 text-center">
         <h2 className="text-2xl font-bold mb-6">Ready to Simulate Real Crypto Trading?</h2>
@@ -222,21 +245,13 @@ export default function Home() {
               </a>
               <a href="#" className="text-gray-600 hover:text-gray-900">
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path fillRule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.51 0 10-4.48 10-10S17.51 2 12 2zm6.605 4.61a8.502 8.502 0 011.93 5.314c-.281-.054-3.101-.629-5.943-.271-.065-.141-.12-.293-.184-.445a25.416 25.416 0 00-.564-1.236c3.145-1.28 4.577-3.124 4.761-3.362zM12 3.475c2.17 0 4.154.813 5.662 2.148-.152.216-1.443 1.941-4.48 3.08-1.399-2.57-2.95-4.675-3.189-5A8.687 8.687 0 0112 3.475zm-3.633.803a53.896 53.896 0 013.167 4.935c-3.992 1.063-7.517 1.04-7.896 1.04a8.581 8.581 0 014.729-5.975zM3.453 12.01v-.26c.37.01 4.512.065 8.775-1.215.25.477.477.965.694 1.453-.109.033-.228.065-.336.098-4.404 1.42-6.747 5.303-6.942 5.629a8.522 8.522 0 01-2.19-5.705zM12 20.547a8.482 8.482 0 01-5.239-1.8c.152-.315 1.888-3.656 6.703-5.337.022-.01.033-.01.054-.022a35.318 35.318 0 011.823 6.475 8.4 8.4 0 01-3.341.684zm4.761-1.465c-.086-.52-.542-3.015-1.659-6.084 2.679-.423 5.022.271 5.314.369a8.468 8.468 0 01-3.655 5.715z" clipRule="evenodd"></path>
-                </svg>
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path fillRule="evenodd" d="M19.812 5.418c.861.23 1.538.907 1.768 1.768C21.998 8.746 22 12 22 12s0 3.255-.418 4.814a2.504 2.504 0 0 1-1.768 1.768c-1.56.419-7.814.419-7.814.419s-6.255 0-7.814-.419a2.505 2.505 0 0 1-1.768-1.768C2 15.255 2 12 2 12s0-3.255.417-4.814a2.507 2.507 0 0 1 1.768-1.768C5.744 5 11.998 5 11.998 5s6.255 0 7.814.418ZM15.194 12 10 15V9l5.194 3Z" clipRule="evenodd"></path>
+                  <path fillRule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.51 0 10-4.48 10-10S17.51 2 12 2zm6.605 4.61a8.502 8.502 0 011.93 5.314c-.281-.054-3.101-.629-5.943-.271-.065-.141-.12-.293-.184-.445a25.416 25.416 0 00-.564-1.236c3.145-1.28 4.577-3.124 4.761-3.362zM12 3.475c2.17 0 4.154.813 5.662 2.148-.152.216-1.443 1.941-4.48 3.08-1.399-2.57-2.95-4.675-3.189-5A8.687 8.687 0 0112 3.475zm-3.633.803a53.896 53.896 0 013.167 4.935c-3.992 1.063-7.517 1.04-7.896 1.04a8.581 8.581 0 014.729-5.975zM3.453 12.01v-.26c.37.01 4.512.065 8.775-1.215.25.477.477.965.694 1.453-.109.033-.228.065-.336.098-4.404 1.42-6.747 5.303-6.942 5.629a8.522 8.522 0 01-2.19-5.705zM12 20.547a8.482 8.482 0 01-5.239-1.8c.152-.315 1.888-3.656 6.703-6.197-.396-.159-.797-.325-1.169-.485-1.554-.666-3.352-1.423-4.97-2.181-.54-.31-.489-.5-.559-.659z"></path>
                 </svg>
               </a>
             </div>
           </div>
-          <div className="mt-6 text-center text-gray-500 text-sm">
-            Copyright © 2025 TokenX
-          </div>
         </div>
       </footer>
-    </div >
+    </div>
   );
 }

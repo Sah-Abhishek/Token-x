@@ -1,4 +1,5 @@
 "use client"
+import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 
 interface CryptoData {
@@ -7,6 +8,13 @@ interface CryptoData {
   change: string;
   isPositive: boolean;
   logo: string;
+}
+
+
+interface BinanceCoinData {
+  symbol: string;
+  lastPrice: string;
+  priceChangePercent: string;
 }
 
 const LiveMarketData: React.FC = () => {
@@ -20,7 +28,7 @@ const LiveMarketData: React.FC = () => {
         );
         const data = await response.json();
 
-        const formattedData: CryptoData[] = data.map((coin: any) => {
+        const formattedData: CryptoData[] = data.map((coin: BinanceCoinData) => {
           // Determine the logo based on the coin name
           const logo = coin.symbol.replace('USDT', '') === 'BTC'
             ? '/bitcoin-logo.png'
@@ -69,7 +77,7 @@ const LiveMarketData: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-6 w-6 flex-shrink-0 relative">
-                        <img src={crypto.logo} alt={crypto.name} height={24} width={24} />
+                        <Image src={crypto.logo} alt={crypto.name} height={24} width={24} />
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{crypto.name}</div>

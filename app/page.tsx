@@ -1,12 +1,8 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import Image from 'next/image';
 import { FaChartLine, FaCoins, FaTrophy, FaTelegram } from 'react-icons/fa';
-import { FaChartLine as ChartIcon } from 'react-icons/fa6';
 import LiveMarketData from './components/LiveMarketData';
 import Testimonials from './components/Testimonials';
-import CallToAction from './components/CallToAction';
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 

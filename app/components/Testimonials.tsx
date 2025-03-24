@@ -1,7 +1,6 @@
 
 import { FaUser } from "react-icons/fa";
 import React from 'react';
-import Image from 'next/image';
 
 interface Testimonial {
   name: string;

@@ -14,8 +14,18 @@ export async function GET() {
       volume: string;
     }
 
+    // Define the type of API response
+    interface CoinGeckoApiResponse {
+      name: string;
+      current_price: number;
+      price_change_percentage_24h: number;
+      market_cap: number;
+      total_volume: number;
+      image: string;
+    }
+
     // Extract only necessary fields
-    const cryptocurrencies: Crypto[] = data.map((coin: any) => ({
+    const cryptocurrencies: Crypto[] = data.map((coin: CoinGeckoApiResponse) => ({
       name: coin.name,
       price: coin.current_price,
       change: `${coin.price_change_percentage_24h.toFixed(2)}%`,
@@ -25,7 +35,9 @@ export async function GET() {
     }));
 
     return NextResponse.json(cryptocurrencies, { status: 200 });
-  } catch (error) {
+  } catch (err) {
+    // Optionally log the error if needed
+    console.error(err);
     return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
   }
 }

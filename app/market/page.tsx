@@ -1,8 +1,5 @@
 import { FaChartLine as ChartIcon } from 'react-icons/fa6';
-import Image from 'next/image';
 import Navbar from '../components/Navbar';
-import CryptoTableSkeleton from '../components/CryptoTableSkeleton';
-import Link from 'next/link';
 import ClientSearchAndFilter from '../components/ClientSearchAndFilter';
 import Footer from '../components/Footer';
 

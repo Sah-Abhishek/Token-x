@@ -1,13 +1,10 @@
-import { RiTwitterXFill } from "react-icons/ri";
-import { BsDiscord } from "react-icons/bs";
 import { IoNewspaper } from "react-icons/io5";
 import { HiInformationCircle } from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";
 import React from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FaChartLine, FaCoins, FaTrophy, FaTelegram } from 'react-icons/fa';
+import { FaTrophy } from 'react-icons/fa';
 import { FaChartLine as ChartIcon } from 'react-icons/fa6';
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 

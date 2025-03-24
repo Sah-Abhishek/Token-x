@@ -30,7 +30,7 @@ const Navbar = () => {
               <MdDashboard className="mr-2" />
               Dashboard
             </Link>
-            <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
+            <Link href="/market" className="flex items-center text-gray-600 hover:text-gray-900">
               <ChartIcon className="mr-2" />
               Market
             </Link>

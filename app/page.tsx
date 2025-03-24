@@ -13,6 +13,8 @@ import { FaChartLine as ChartIcon } from 'react-icons/fa6';
 import LiveMarketData from './components/LiveMarketData';
 import Testimonials from './components/Testimonials';
 import CallToAction from './components/CallToAction';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import Navbar from "./components/Navbar";
 
 const Home: React.FC = () => {
   return (
@@ -24,56 +26,7 @@ const Home: React.FC = () => {
       </Head>
 
       {/* Navigation */}
-      <nav className="bg-white py-4 px-6 shadow-sm">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-1">
-            <div className="flex items-center">
-              <Image
-                src="/logo-tokenx.png"
-                alt="TokenX"
-                width={32}
-                height={32}
-                className="mr-2"
-              />
-              <span className="text-xl font-bold">TokenX</span>
-            </div>
-
-            <div className="hidden md:flex items-center ml-10 space-x-6">
-              <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
-                <MdDashboard className="mr-2" /> {/* Adjusted for spacing between icon and text */}
-                Dashboard
-              </Link>
-              <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
-                <ChartIcon className="mr-2" /> {/* Adjusted for spacing between icon and text */}
-                Market
-              </Link>
-              <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
-                <FaTrophy className="mr-2" /> {/* Adjusted for spacing between icon and text */}
-                Leaderboard
-              </Link>
-              <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
-                <HiInformationCircle className="mr-2" /> {/* Adjusted for spacing between icon and text */}
-                How It Works
-              </Link>
-              <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
-                <IoNewspaper className="mr-2" /> {/* Adjusted for spacing between icon and text */}
-                Blogs
-              </Link>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button className="bg-gray-800 text-white px-4 py-2 rounded-md text-sm flex items-center">
-              {/* <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5 mr-2"> */}
-              {/*   <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3" /> */}
-              {/* </svg> */}
-              {/* Connect Wallet */}
-              Signup
-            </button>
-            <button className="border border-gray-300 px-4 py-2 rounded-md text-sm">Login</button>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="py-16 px-6">
@@ -158,7 +111,7 @@ const Home: React.FC = () => {
       <Testimonials />
 
       {/* Call to Action Section */}
-      <CallToAction />
+
 
       {/* Footer */}
       <footer className="text-black py-12 px-6">
@@ -188,8 +141,7 @@ const Home: React.FC = () => {
               <h4 className="text-lg font-semibold mb-4 text-black">Connect</h4>
               <ul className="space-x-4 flex">
                 <li><Link href="/twitter" className="text-gray-600 hover:text-gray-900"><RiTwitterXFill size={24} /></Link></li>
-                <li><Link href="/discord" className="text-gray-600 hover:text-gray-900">
-                </Link><BsDiscord size={24} /></li>
+                <li><Link href="/discord" className="text-gray-600 hover:text-gray-900"></Link><BsDiscord size={24} /></li>
                 <li><Link href="/telegram" className="text-gray-600 hover:text-gray-900"><FaTelegram size={24} /></Link></li>
               </ul>
             </div>

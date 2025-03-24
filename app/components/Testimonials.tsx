@@ -1,3 +1,5 @@
+
+import { FaUser } from "react-icons/fa";
 import React from 'react';
 import Image from 'next/image';
 
@@ -41,7 +43,8 @@ const Testimonials: React.FC = () => {
               <div className="flex items-center mb-4">
                 <div className="flex-shrink-0 h-12 w-12 relative rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                   {/* Fallback avatar representation */}
-                  <span className="text-xl">{testimonial.name.charAt(0)}</span>
+                  {/* <span className="text-xl">{testimonial.name.charAt(0)}</span> */}
+                  <FaUser size={28} />
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">{testimonial.name}</h3>

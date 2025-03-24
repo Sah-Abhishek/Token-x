@@ -43,7 +43,7 @@ export default function Home() {
           marketCap: parseFloat(crypto.marketCap.replace(/[^0-9.-]+/g, "")) || 0, // Remove non-numeric characters like commas
           volume: parseFloat(crypto.volume.replace(/[^0-9.-]+/g, "")) || 0, // Same as above
         }));
-        // @ts-ignore
+        // @ts-expect-error
         setCryptocurrencies(updatedData); // Set the cryptocurrencies state
       } catch (error) {
         console.error('There was an error fetching the data:', error);
@@ -67,14 +67,14 @@ export default function Home() {
       case 'Price':
         return b.price - a.price;
       case '24h Change':
-        // @ts-ignore
+        // @ts-expect-error
         return b.change - a.change;
       case 'Volume':
-        // @ts-ignore
+        // @ts-expect-error
         return b.volume - a.volume;
       case 'Market Cap':
       default:
-        // @ts-ignore
+        // @ts-expect-error
         return b.marketCap - a.marketCap;
     }
   });

@@ -1,10 +1,3 @@
-
-import { RiTwitterXFill } from "react-icons/ri";
-import { BsDiscord } from "react-icons/bs";
-import { IoNewspaper } from "react-icons/io5";
-import { HiInformationCircle } from "react-icons/hi";
-import { MdDashboard } from "react-icons/md";
-import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -15,6 +8,7 @@ import Testimonials from './components/Testimonials';
 import CallToAction from './components/CallToAction';
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 const Home: React.FC = () => {
   return (
@@ -111,71 +105,34 @@ const Home: React.FC = () => {
       <Testimonials />
 
       {/* Call to Action Section */}
-      {/*footer*/}
 
 
-      <footer className="text-black py-12 px-6">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-xl font-bold mb-4 text-black">TokenX</h3>
-              <p className="text-gray-600">Practice trading with zero risk.</p>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4 text-black">Resources</h4>
-              <ul className="space-y-2">
-                <li><Link href="/learn" className="text-gray-600 hover:text-gray-900">Learning Center</Link></li>
-                <li><Link href="/faq" className="text-gray-600 hover:text-gray-900">FAQ</Link></li>
-                <li><Link href="/api" className="text-gray-600 hover:text-gray-900">API</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4 text-black">Company</h4>
-              <ul className="space-y-2">
-                <li><Link href="/about" className="text-gray-600 hover:text-gray-900">About Us</Link></li>
-                <li><Link href="/contact" className="text-gray-600 hover:text-gray-900">Contact</Link></li>
-                <li><Link href="/careers" className="text-gray-600 hover:text-gray-900">Careers</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4 text-black">Connect</h4>
-              <ul className="space-x-4 flex">
-                <li><Link href="/twitter" className="text-gray-600 hover:text-gray-900"><RiTwitterXFill size={24} /></Link></li>
-                <li><Link href="/discord" className="text-gray-600 hover:text-gray-900"></Link><BsDiscord size={24} /></li>
-                <li><Link href="/telegram" className="text-gray-600 hover:text-gray-900"><FaTelegram size={24} /></Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className=" border-gray-800 mt-10 pt-6 text-center text-gray-500">
-            <p>© {new Date().getFullYear()} TokenX. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
       {/* Floating tools panel */}
-      <div className="fixed bottom-6 right-6 flex items-center space-x-2 bg-white p-2 rounded-full shadow-lg">
-        <button className="p-2 rounded-full hover:bg-gray-100">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <button className="p-2 rounded-full hover:bg-gray-100">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
-        <button className="p-2 rounded-full hover:bg-gray-100">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-          </svg>
-        </button>
-        <button className="p-2 rounded-full hover:bg-gray-100">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </button>
-      </div>
+      <Footer />
+      {/* <div className="fixed bottom-6 right-6 flex items-center space-x-2 bg-white p-2 rounded-full shadow-lg"> */}
+      {/*   <button className="p-2 rounded-full bg-gray-900 hover:bg-gray-100"> */}
+      {/*     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> */}
+      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /> */}
+      {/*     </svg> */}
+      {/*   </button> */}
+      {/*   <button className="p-2 rounded-full hover:bg-gray-100"> */}
+      {/*     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> */}
+      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /> */}
+      {/*     </svg> */}
+      {/*   </button> */}
+      {/*   <button className="p-2 rounded-full hover:bg-gray-100"> */}
+      {/*     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> */}
+      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /> */}
+      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /> */}
+      {/*     </svg> */}
+      {/*   </button> */}
+      {/*   <button className="p-2 rounded-full hover:bg-gray-100"> */}
+      {/*     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> */}
+      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /> */}
+      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /> */}
+      {/*     </svg> */}
+      {/*   </button> */}
+      {/* </div> */}
     </div>
   );
 };

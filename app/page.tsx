@@ -111,9 +111,9 @@ const Home: React.FC = () => {
       <Testimonials />
 
       {/* Call to Action Section */}
+      {/*footer*/}
 
 
-      {/* Footer */}
       <footer className="text-black py-12 px-6">
         <div className="container mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">

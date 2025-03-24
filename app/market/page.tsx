@@ -24,7 +24,6 @@ const apiUrl = process.env.API_URL; // Access server-side variable
 
 async function getCryptoData() {
   try {
-    console.log("This is the apiUrl: ",)
     const res = await fetch(`${apiUrl}/api/cryptos`);
     if (!res.ok) {
       throw new Error('Failed to fetch cryptocurrencies');

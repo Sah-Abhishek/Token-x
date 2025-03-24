@@ -41,7 +41,7 @@ export default function Home() {
     if (!value) return 0;
 
     // Remove non-numeric characters except for . and -
-    let cleanedValue = value.replace(/[^0-9.-]+/g, '');
+    const cleanedValue = value.replace(/[^0-9.-]+/g, '');
 
     // Convert cleaned value to a number first before applying the logic
     let numericValue = parseFloat(cleanedValue);

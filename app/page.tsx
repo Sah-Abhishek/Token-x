@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Image from 'next/image';
-import { FaChartLine, FaCoins, FaTrophy, FaTelegram } from 'react-icons/fa';
+import { FaChartLine, FaCoins, FaTrophy } from 'react-icons/fa';
 import LiveMarketData from './components/LiveMarketData';
 import Testimonials from './components/Testimonials';
 import Navbar from "./components/Navbar";

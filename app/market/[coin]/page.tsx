@@ -1,12 +1,29 @@
-"use client"
-import React from 'react';
-import { Star } from 'lucide-react';
-import PriceChart from '../../components/PriceChart';
-import MarketInfo from '../../components/Marketinfo';
-import OrderPanel from '../../components/OrderPanel';
-import Portfolio from '../../components/Portfolio';
+"use client";
+import React, { useState, useEffect } from "react";
+import { Star } from "lucide-react";
+import { MdOutlineCandlestickChart } from "react-icons/md";
+import { FaChartLine } from "react-icons/fa6"; // Importing React Icons
+import PriceChart from "../../components/PriceChart";
+import MarketInfo from "../../components/Marketinfo";
+import OrderPanel from "../../components/OrderPanel";
+import Portfolio from "../../components/Portfolio";
+import CandleChart from "@/app/components/CandleChart";
 
 const Index: React.FC = () => {
+  const [selectedChart, setSelectedChart] = useState<string>("candlestick");
+
+  // Load chart preference from localStorage on mount
+  useEffect(() => {
+    const savedChart = localStorage.getItem("selectedChart");
+    if (savedChart) setSelectedChart(savedChart);
+  }, []);
+
+  // Save chart preference to localStorage when changed
+  const handleChartSelection = (chartType: string) => {
+    setSelectedChart(chartType);
+    localStorage.setItem("selectedChart", chartType);
+  };
+
   return (
     <div className="text-black min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -34,7 +51,10 @@ const Index: React.FC = () => {
 
         <MarketInfo />
 
-        <PriceChart />
+        {/* Conditionally Render the Selected Chart */}
+
+        {/* @ts-ignore*/}
+        <div>{selectedChart === "candlestick" ? <PriceChart handleChartSelection={handleChartSelection} selectedChart={selectedChart} setSelectedChart={setSelectedChart} /> : <CandleChart handleChartSelection={handleChartSelection} selectedChart={selectedChart} setSelectedChart={setSelectedChart} />}</div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
           <div className="md:col-span-2">

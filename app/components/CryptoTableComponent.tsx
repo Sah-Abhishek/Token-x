@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 type Crypto = {
   id: string;
@@ -52,14 +53,14 @@ export default function ClientCryptoTable({
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex items-center">
                     <Image src={crypto.image} alt={crypto.name} width={24} height={24} className="mr-2" />
-                    <span>{crypto.name}</span>
+                    <span>{crypto.name} <span className="text-gray-500 font-bold"> {(crypto.symbol.toUpperCase())}</span></span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${crypto.price.toFixed(2)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <span
                     className={
-                      `font-bold ${crypto.change < 0 ? "text-red-500" : "text-green-500"}` // Adding font weight and color
+                      `font-bold ${crypto.change < 0 ? "text-red-500 bg-red-100 p-1 rounded-md" : "text-green-500 bg-green-100 p-1 rounded-md"}` // Adding font weight and color
                     }
                   >
                     {crypto.change.toFixed(2)}%
@@ -68,9 +69,11 @@ export default function ClientCryptoTable({
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${crypto.marketCap.toLocaleString()}B</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${crypto.volume.toLocaleString()}B</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button className="bg-gray-50 py-1 px-2 rounded-md hover:text-black hover:bg-gray-300">
-                    View Details
-                  </button>
+                  <Link href={`/market/${crypto.name}`}>
+                    <button className="bg-gray-50 py-1 px-2 rounded-md hover:text-black hover:bg-gray-300">
+                      View Details
+                    </button>
+                  </Link>
                 </td>
               </tr>
             ))}

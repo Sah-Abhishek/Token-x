@@ -1,12 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
-    const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false");
+    const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false");
     const data = await response.json();
+    // console.log("Data in backend: ", data.length);
 
     // Define the expected type of each cryptocurrency
     interface Crypto {
+      symbol: string,
       name: string;
       price: number;
       change: string;
@@ -16,6 +18,7 @@ export async function GET() {
 
     // Define the type of API response
     interface CoinGeckoApiResponse {
+      symbol: string,
       name: string;
       current_price: number;
       price_change_percentage_24h: number;
@@ -26,6 +29,7 @@ export async function GET() {
 
     // Extract only necessary fields
     const cryptocurrencies: Crypto[] = data.map((coin: CoinGeckoApiResponse) => ({
+      symbol: coin.symbol,
       name: coin.name,
       price: coin.current_price,
       change: `${coin.price_change_percentage_24h.toFixed(2)}%`,
@@ -33,6 +37,8 @@ export async function GET() {
       volume: `$${(coin.total_volume / 1e9).toFixed(1)}B`,
       image: coin.image
     }));
+
+    console.log("\nThese are the cryptocurrencies: ", cryptocurrencies.length, "\n");
 
     return NextResponse.json(cryptocurrencies, { status: 200 });
   } catch (err) {

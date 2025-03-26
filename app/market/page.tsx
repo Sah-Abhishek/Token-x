@@ -24,12 +24,16 @@ const apiUrl = process.env.API_URL; // Access server-side variable
 
 async function getCryptoData() {
   try {
-    const res = await fetch(`${apiUrl}/api/cryptos`);
+    const res = await fetch(`${apiUrl}/api/cryptos`, {
+      headers: {
+        'Cache-Control': 'no-store',  // Prevents caching in the browser and any intermediate cache
+      },
+    });
     if (!res.ok) {
       throw new Error('Failed to fetch cryptocurrencies');
     }
     const data: Crypto[] = await res.json();
-
+    console.log("\nData: ", data, "\n");
     // Process the data
     const updatedData = data.map(crypto => ({
       ...crypto,

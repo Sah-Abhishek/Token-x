@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { FaChartLine } from "react-icons/fa6";
 import { MdOutlineCandlestickChart } from "react-icons/md";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, TooltipProps } from "recharts";
+import { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
 
 type TimeFilter = "1M" | "5M" | "15M" | "1H" | "4H" | "1D" | "1W";
 
@@ -10,6 +11,11 @@ interface ChartData {
   value: number;
   tooltipDate: string;
   tooltipValue: string;
+}
+
+interface PriceChartProps {
+  selectedChart: string;
+  handleChartSelection: (chart: string) => void;
 }
 
 const timeFilterToInterval: Record<TimeFilter, string> = {
@@ -22,8 +28,7 @@ const timeFilterToInterval: Record<TimeFilter, string> = {
   "1W": "1w",
 };
 
-//@ts-ignore
-const PriceChart: React.FC = ({ selectedChart, setSelectedChart, handleChartSelection }) => {
+const PriceChart: React.FC<PriceChartProps> = ({ selectedChart, handleChartSelection }) => {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("1D");
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -35,15 +40,15 @@ const PriceChart: React.FC = ({ selectedChart, setSelectedChart, handleChartSele
       const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=50`;
 
       const response = await fetch(url);
-      const data = await response.json();
+      const data: [number, string, string, string, string][] = await response.json(); // Explicit tuple type
 
-      const formattedData: ChartData[] = data.map((entry: any) => {
-        const date = new Date(entry[0]);
+      const formattedData: ChartData[] = data.map(([timestamp, , , , closePrice]) => {
+        const date = new Date(timestamp);
         return {
           date: date.toISOString().slice(0, 10),
-          value: parseFloat(entry[4]), // Closing price
+          value: parseFloat(closePrice),
           tooltipDate: date.toLocaleString(),
-          tooltipValue: parseFloat(entry[4]).toFixed(2),
+          tooltipValue: parseFloat(closePrice).toFixed(2),
         };
       });
 
@@ -65,12 +70,13 @@ const PriceChart: React.FC = ({ selectedChart, setSelectedChart, handleChartSele
 
   const timeFilters: TimeFilter[] = ["1M", "5M", "15M", "1H", "4H", "1D", "1W"];
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({ active, payload }) => {
     if (active && payload && payload.length) {
+      const { tooltipDate, tooltipValue } = payload[0].payload as ChartData;
       return (
         <div className="glass p-4 rounded-lg shadow-sm border border-gray-100 animate-fade-in">
-          <p className="text-sm text-gray-600">{payload[0].payload.tooltipDate}</p>
-          <p className="text-green-600 font-medium">Value: ${payload[0].payload.tooltipValue}</p>
+          <p className="text-sm text-gray-600">{tooltipDate}</p>
+          <p className="text-green-600 font-medium">Value: ${tooltipValue}</p>
         </div>
       );
     }
@@ -81,7 +87,7 @@ const PriceChart: React.FC = ({ selectedChart, setSelectedChart, handleChartSele
     <div className="w-full bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-fade-in">
       {/* Top Bar: Time Filters (Left) & Chart Selection Icons (Right) */}
       <div className="flex justify-between items-center mb-4">
-        {/* Time Filters (Left-Aligned) */}
+        {/* Time Filters */}
         <div className="flex space-x-2 overflow-x-auto pb-2">
           {timeFilters.map((filter) => (
             <button
@@ -95,7 +101,7 @@ const PriceChart: React.FC = ({ selectedChart, setSelectedChart, handleChartSele
           ))}
         </div>
 
-        {/* Chart Selection Icons (Right-Aligned) */}
+        {/* Chart Selection Icons */}
         <div className="flex space-x-2">
           <button
             onClick={() => handleChartSelection("line")}

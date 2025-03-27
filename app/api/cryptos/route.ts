@@ -8,6 +8,7 @@ export async function GET() {
 
     // Define the expected type of each cryptocurrency
     interface Crypto {
+      id: string,
       symbol: string,
       name: string;
       price: number;
@@ -18,6 +19,7 @@ export async function GET() {
 
     // Define the type of API response
     interface CoinGeckoApiResponse {
+      id: string,
       symbol: string,
       name: string;
       current_price: number;
@@ -29,6 +31,7 @@ export async function GET() {
 
     // Extract only necessary fields
     const cryptocurrencies: Crypto[] = data.map((coin: CoinGeckoApiResponse) => ({
+      id: coin.id,
       symbol: coin.symbol,
       name: coin.name,
       price: coin.current_price,
@@ -38,7 +41,7 @@ export async function GET() {
       image: coin.image
     }));
 
-    console.log("\nThese are the cryptocurrencies: ", cryptocurrencies.length, "\n");
+    // console.log("\nThese are the cryptocurrencies: ", cryptocurrencies.length, "\n");
 
     return NextResponse.json(cryptocurrencies, { status: 200 });
   } catch (err) {

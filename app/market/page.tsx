@@ -33,7 +33,7 @@ async function getCryptoData() {
       throw new Error('Failed to fetch cryptocurrencies');
     }
     const data: Crypto[] = await res.json();
-    console.log("\nData: ", data, "\n");
+    // console.log("\nData: ", data, "\n");
     // Process the data
     const updatedData = data.map(crypto => ({
       ...crypto,

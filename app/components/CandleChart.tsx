@@ -4,8 +4,27 @@ import { useEffect, useRef, useState } from "react";
 import { createChart, IChartApi } from "lightweight-charts";
 import { FaChartLine } from "react-icons/fa6";
 import { MdOutlineCandlestickChart } from "react-icons/md";
+import {
+  CandlestickData,
+  UTCTimestamp // Add this import
+} from "lightweight-charts";
 
 type TimeFilter = "1M" | "5M" | "15M" | "1H" | "4H" | "1D" | "1W";
+
+type BinanceKline = [
+  number,   // Open time
+  string,   // Open price
+  string,   // High price
+  string,   // Low price
+  string,   // Close price
+  string,   // Volume
+  number,   // Close time
+  string,   // Quote asset volume
+  number,   // Number of trades
+  string,   // Taker buy base asset volume
+  string,   // Taker buy quote asset volume
+  string    // Ignore field
+];
 
 const timeFilterToInterval: Record<TimeFilter, string> = {
   "1M": "1m",
@@ -25,7 +44,6 @@ const CandleChart = ({ selectedChart, handleChartSelection }: { selectedChart: s
   useEffect(() => {
     if (!chartRef.current) return;
 
-    // Create chart instance
     const chart = createChart(chartRef.current, {
       width: chartRef.current.clientWidth,
       height: 400,
@@ -33,7 +51,6 @@ const CandleChart = ({ selectedChart, handleChartSelection }: { selectedChart: s
       grid: { vertLines: { color: "#eeeeee" }, horzLines: { color: "#eeeeee" } },
     });
 
-    // ✅ Correct method to add candlestick series
     const candleSeries = chart.addCandlestickSeries({
       upColor: "#16a34a",
       downColor: "#dc2626",
@@ -51,17 +68,30 @@ const CandleChart = ({ selectedChart, handleChartSelection }: { selectedChart: s
         const response = await fetch(
           `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=50`
         );
-        const data = await response.json();
+        const data: BinanceKline[] = await response.json();
 
-        const formattedData = data.map((candle: any) => ({
-          time: candle[0] / 1000, // Convert timestamp to seconds
-          open: parseFloat(candle[1]),
-          high: parseFloat(candle[2]),
-          low: parseFloat(candle[3]),
-          close: parseFloat(candle[4]),
-        }));
+        const
+          formattedData:
+            CandlestickData[] = data.map(
+              (candle: BinanceKline) => ({
+                time: (candle[0] / 1000) as UTCTimestamp, // Cast to UTCTimestamp
+                open: parseFloat(candle[1]),
+                high: parseFloat(candle[2]),
+                low: parseFloat(candle[3]),
+                close: parseFloat(candle[4]),
+              }));
 
         candleSeries.setData(formattedData);
+
+        if (formattedData.length > 0) {
+          const lastCandle = formattedData[formattedData.length - 1];
+          const firstVisibleCandle = formattedData[Math.max(0, formattedData.length - 30)];
+
+          chart.timeScale().setVisibleRange({
+            from: firstVisibleCandle.time,
+            to: lastCandle.time,
+          });
+        }
       } catch (error) {
         console.error("Error fetching candlestick data:", error);
       }
@@ -73,6 +103,8 @@ const CandleChart = ({ selectedChart, handleChartSelection }: { selectedChart: s
       chartInstance.current?.remove();
     };
   }, [timeFilter]);
+
+  // ... rest of the component remains the same ...
 
   return (
     <div className="w-full p-4 rounded-lg shadow border border-gray-100">

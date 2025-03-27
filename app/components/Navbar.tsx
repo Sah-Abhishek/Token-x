@@ -1,3 +1,4 @@
+"use client"
 import { IoNewspaper } from "react-icons/io5";
 import { HiInformationCircle } from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";

@@ -1,39 +1,121 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Image from 'next/image';
+import { useParams } from "next/navigation";
 import { Star } from "lucide-react";
-import { MdOutlineCandlestickChart } from "react-icons/md";
-import { FaChartLine } from "react-icons/fa6"; // Importing React Icons
-import PriceChart from "../../components/PriceChart";
-import MarketInfo from "../../components/Marketinfo";
-import OrderPanel from "../../components/OrderPanel";
-import Portfolio from "../../components/Portfolio";
+import MarketInfo from "@/app/components/Marketinfo";
+import OrderPanel from "@/app/components/OrderPanel";
+import Portfolio from "@/app/components/Portfolio";
 import CandleChart from "@/app/components/CandleChart";
+import PriceChart from "@/app/components/PriceChart";
+import Navbar from "@/app/components/Navbar";
 
-const Index: React.FC = () => {
+const CoinPage: React.FC = () => {
+  interface CoinData {
+    id: string;
+    name: string;
+    symbol: string;
+    market_cap: number;
+    total_volume: number;
+    circulating_supply: number;
+    image: string;
+    price_change_percentage_24h: number;
+    coinPrice: number;
+    current_price: number;
+  }
+
+  const params = useParams() as { coin?: string }; // ✅ Explicitly define type
+  const coin = params.coin ? params.coin.toUpperCase() : "";
+
   const [selectedChart, setSelectedChart] = useState<string>("candlestick");
+  const [coinData, setCoinData] = useState<CoinData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  // Load chart preference from localStorage on mount
+  useEffect(() => {
+    console.log("Fetching data for:", coin);
+
+    const fetchMarketData = async () => {
+      setLoading(true);
+      setError(false);
+      try {
+        const formattedCoin = coin.toLowerCase().replace(/\s+/g, '-');
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${formattedCoin}`
+        );
+        const data = await response.json();
+
+        if (data.length > 0) {
+          setCoinData(data[0]); // ✅ Store coin data
+        } else {
+          setCoinData(null);
+          setError(true);
+        }
+      } catch (error) {
+        console.error("Error fetching market data:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (coin) fetchMarketData(); // ✅ Call function when coin changes
+  }, [coin]);
+
   useEffect(() => {
     const savedChart = localStorage.getItem("selectedChart");
     if (savedChart) setSelectedChart(savedChart);
   }, []);
 
-  // Save chart preference to localStorage when changed
+  // console.log("This is the coinData: ", coinData);
   const handleChartSelection = (chartType: string) => {
     setSelectedChart(chartType);
     localStorage.setItem("selectedChart", chartType);
   };
 
+  if (!coin) return <div>Loading...</div>;
+  if (error) return <div>Error fetching data. Please try again.</div>;
+
   return (
     <div className="text-black min-h-screen bg-gray-50">
+      <Navbar />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8 animate-fade-in">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold">Bitcoin (BTC)</h1>
+              <div className="flex items-center gap-2">
+                <Image
+                  src={coinData?.image || "/default-coin.png"}
+                  alt={coinData?.name || "Coin Image"}
+                  height={40}
+                  width={40}
+                  className="rounded-full"
+                />
+                <h1 className="text-2xl font-bold">
+                  {coinData?.name || "Loading..."}
+                  <span className="text-gray-500 ml-1">
+                    ({coinData?.symbol?.toUpperCase() || "N/A"})
+                  </span>
+                </h1>
+              </div>
               <div className="flex items-center">
-                <span className="text-3xl font-semibold mr-3">$86,580.00</span>
-                <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded-md text-sm font-medium">-0.6%</span>
+                {loading ? (
+                  <span className="text-lg">Fetching price...</span>
+                ) : (
+                  <>
+                    <span className="text-3xl font-semibold mr-3">
+                      ${coinData?.current_price.toLocaleString() || "N/A"}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-sm font-medium ${(coinData?.price_change_percentage_24h ?? 0) < 0  // ✅ Default to 0 if undefined
+                          ? "text-red-600 bg-red-50"
+                          : "text-green-600 bg-green-50"
+                        }`}
+                    >
+                      {(coinData?.price_change_percentage_24h ?? 0).toFixed(2)}%  {/* ✅ Prevent undefined */}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -49,12 +131,22 @@ const Index: React.FC = () => {
           </div>
         </div>
 
-        <MarketInfo />
+        <MarketInfo coinData={coinData} />
 
         {/* Conditionally Render the Selected Chart */}
-
-        {/* @ts-ignore*/}
-        <div>{selectedChart === "candlestick" ? <PriceChart handleChartSelection={handleChartSelection} selectedChart={selectedChart} setSelectedChart={setSelectedChart} /> : <CandleChart handleChartSelection={handleChartSelection} selectedChart={selectedChart} setSelectedChart={setSelectedChart} />}</div>
+        <div>
+          {selectedChart === "candlestick" ? (
+            <CandleChart
+              handleChartSelection={handleChartSelection}
+              selectedChart={selectedChart}
+            />
+          ) : (
+            <PriceChart
+              handleChartSelection={handleChartSelection}
+              selectedChart={selectedChart}
+            />
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
           <div className="md:col-span-2">
@@ -66,8 +158,8 @@ const Index: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
-export default Index;
+export default CoinPage;

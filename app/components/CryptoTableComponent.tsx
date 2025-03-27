@@ -69,7 +69,7 @@ export default function ClientCryptoTable({
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${crypto.marketCap.toLocaleString()}B</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${crypto.volume.toLocaleString()}B</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <Link href={`/market/${crypto.name}`}>
+                  <Link href={`/market/${crypto.id}`}>
                     <button className="bg-gray-50 py-1 px-2 rounded-md hover:text-black hover:bg-gray-300">
                       View Details
                     </button>

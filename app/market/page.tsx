@@ -35,12 +35,14 @@ async function getCryptoData() {
     const data: Crypto[] = await res.json();
     // console.log("\nData: ", data, "\n");
     // Process the data
-    const updatedData = data.map(crypto => ({
+    // In your getCryptoData function
+    const updatedData = data?.map(crypto => ({
       ...crypto,
-      change: parseFloat(crypto.change as string) || 0,
-      marketCap: parseFloat((crypto.marketCap as string).replace(/[^0-9.-]+/g, "")) || 0,
-      volume: parseFloat((crypto.volume as string).replace(/[^0-9.-]+/g, "")) || 0,
-    }));
+      symbol: crypto?.symbol || 'N/A', // Add default value
+      change: parseFloat(crypto?.change as string) || 0,
+      marketCap: parseFloat((crypto?.marketCap as string)?.replace(/[^0-9.-]+/g, "")) || 0,
+      volume: parseFloat((crypto?.volume as string)?.replace(/[^0-9.-]+/g, "")) || 0,
+    })) || [];
 
     return updatedData;
   } catch (error) {

@@ -53,7 +53,7 @@ export default function ClientCryptoTable({
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex items-center">
                     <Image src={crypto.image} alt={crypto.name} width={24} height={24} className="mr-2" />
-                    <span>{crypto.name} <span className="text-gray-500 font-bold"> {(crypto.symbol.toUpperCase())}</span></span>
+                    <span>{crypto?.name} <span className="text-gray-500 font-bold"> {(crypto?.symbol.toUpperCase()) || "NA"}</span></span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${crypto.price.toFixed(2)}</td>

@@ -29,6 +29,7 @@ export default function ClientCryptoTable({
   onNextPage,
   onPrevPage
 }: ClientCryptoTableProps) {
+  // console.log("These are the cryptos: ", cryptos[0]);
   return (
     <div>
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -46,7 +47,7 @@ export default function ClientCryptoTable({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {cryptos.map((crypto, index) => (
-              <tr key={index}>
+              <tr key={crypto.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {((currentPage - 1) * 10) + index + 1}
                 </td>

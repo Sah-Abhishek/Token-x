@@ -14,6 +14,7 @@ type Crypto = {
 };
 
 const apiUrl = process.env.API_URL; // Access server-side variable
+
 // Create a new client component for the interactive search/filter UI
 // ClientSearchAndFilter.tsx - mark with "use client"
 // This will handle the search/filter state and UI

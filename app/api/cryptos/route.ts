@@ -27,6 +27,7 @@ export async function GET() {
       market_cap: number;
       total_volume: number;
       image: string;
+      change: string;
     }
 
     // Extract only necessary fields
@@ -35,7 +36,7 @@ export async function GET() {
       symbol: coin.symbol,
       name: coin.name,
       price: coin.current_price,
-      change: `${coin.price_change_percentage_24h.toFixed(2)}%`,
+      change: `${(coin.price_change_percentage_24h || 0).toFixed(2)}%`,
       marketCap: `$${(coin.market_cap / 1e9).toFixed(1)}B`, // Convert to billions
       volume: `$${(coin.total_volume / 1e9).toFixed(1)}B`,
       image: coin.image

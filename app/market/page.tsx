@@ -14,6 +14,7 @@ type Crypto = {
 };
 
 const apiUrl = process.env.API_URL; // Access server-side variable
+console.log("This is the apiUrl: ", apiUrl);
 
 // Create a new client component for the interactive search/filter UI
 // ClientSearchAndFilter.tsx - mark with "use client"
@@ -39,10 +40,10 @@ async function getCryptoData() {
     // In your getCryptoData function
     const updatedData = data?.map(crypto => ({
       ...crypto,
-      symbol: crypto?.symbol || 'N/A', // Add default value
-      change: parseFloat(crypto?.change as string) || 0,
-      marketCap: parseFloat((crypto?.marketCap as string)?.replace(/[^0-9.-]+/g, "")) || 0,
-      volume: parseFloat((crypto?.volume as string)?.replace(/[^0-9.-]+/g, "")) || 0,
+      symbol: crypto?.symbol || 'N/A',
+      change: typeof crypto.change === 'string' ? parseFloat(crypto.change) || 0 : Number(crypto.change) || 0,
+      marketCap: typeof crypto.marketCap === 'string' ? parseFloat(crypto.marketCap.replace(/[^0-9.-]+/g, "")) || 0 : Number(crypto.marketCap) || 0,
+      volume: typeof crypto.volume === 'string' ? parseFloat(crypto.volume.replace(/[^0-9.-]+/g, "")) || 0 : Number(crypto.volume) || 0,
     })) || [];
 
     return updatedData;

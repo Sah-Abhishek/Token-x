@@ -153,7 +153,14 @@ export async function getCoin(id: string): Promise<CoinDetail | null> {
   return result.status === "ok" ? result.coin : null;
 }
 
-/** 24h ticker for the given Binance symbols, e.g. ["BTCUSDT", "ETHUSDT"]. */
+/**
+ * 24h ticker for the given Binance symbols, e.g. ["BTCUSDT", "ETHUSDT"].
+ *
+ * Falls back to the cached market list, which already carries a price and a
+ * 24h change for every top-250 coin. The fallback therefore costs no extra
+ * upstream request at all — it reads the same cached response the rest of the
+ * page is already built from.
+ */
 export async function getTickers(symbols: string[]): Promise<Ticker[]> {
   if (symbols.length === 0) return [];
 
@@ -163,29 +170,60 @@ export async function getTickers(symbols: string[]): Promise<Ticker[]> {
       next: { revalidate: TICKER_TTL },
     });
 
-    if (!res.ok) {
+    if (res.ok) {
+      const data: unknown = await res.json();
+
+      if (Array.isArray(data) && data.length > 0) {
+        return (data as { symbol: string; lastPrice: string; priceChangePercent: string }[]).map(
+          (entry) => {
+            const change = parseFloat(entry.priceChangePercent);
+            return {
+              symbol: entry.symbol.replace(/USDT$/, ""),
+              price: parseFloat(entry.lastPrice) || 0,
+              change: Number.isFinite(change) ? change : 0,
+              isPositive: Number.isFinite(change) ? change >= 0 : true,
+            };
+          },
+        );
+      }
+    } else {
       console.error(`Binance /ticker/24hr failed: ${res.status}`);
-      return [];
     }
-
-    const data: unknown = await res.json();
-    if (!Array.isArray(data)) return [];
-
-    return (data as { symbol: string; lastPrice: string; priceChangePercent: string }[]).map(
-      (entry) => {
-        const change = parseFloat(entry.priceChangePercent);
-        return {
-          symbol: entry.symbol.replace(/USDT$/, ""),
-          price: parseFloat(entry.lastPrice) || 0,
-          change: Number.isFinite(change) ? change : 0,
-          isPositive: Number.isFinite(change) ? change >= 0 : true,
-        };
-      },
-    );
   } catch (error) {
-    console.error("Failed to fetch tickers:", error);
-    return [];
+    console.error("Binance /ticker/24hr threw:", error);
   }
+
+  return tickersFromMarkets(symbols);
+}
+
+/** Tickers assembled from the cached CoinGecko market list. */
+async function tickersFromMarkets(symbols: string[]): Promise<Ticker[]> {
+  const markets = await getMarkets();
+  if (markets.length === 0) return [];
+
+  // Largest market cap wins a contested ticker, as everywhere else.
+  const bySymbol = new Map<string, Crypto>();
+  for (const coin of markets) {
+    const key = coin.symbol.toUpperCase();
+    const held = bySymbol.get(key);
+    if (!held || coin.marketCap > held.marketCap) bySymbol.set(key, coin);
+  }
+
+  const tickers: Ticker[] = [];
+  for (const requested of symbols) {
+    const ticker = requested.trim().toUpperCase().replace(/USDT$/, "");
+    const coin = bySymbol.get(ticker);
+    if (!coin) continue;
+
+    tickers.push({
+      symbol: ticker,
+      price: coin.price,
+      change: coin.change,
+      isPositive: coin.change >= 0,
+    });
+  }
+
+  return tickers;
 }
 
 /* ---------------------------------------------------------------------------
@@ -224,7 +262,128 @@ export type Series = {
 
 const SERIES_TTL = 60;
 
-/** Close-price series for a Binance pair over one of the CHART_RANGES. */
+/**
+ * CoinGecko picks its own granularity from the day span: five-minutely for a
+ * single day, hourly out to ninety, daily beyond that. These spans land close
+ * enough to the Binance intervals that the fallback chart looks like the one
+ * it replaces.
+ */
+const COINGECKO_RANGE_DAYS: Record<ChartRange, number> = {
+  "24H": 1,
+  "7D": 7,
+  "30D": 30,
+  "1Y": 365,
+};
+
+/** The derived figures every series carries, computed in one place so the two
+ *  sources cannot disagree about what "change" means. */
+function buildSeries(pair: string, range: ChartRange, points: PricePoint[]): Series | null {
+  if (points.length < 2) return null;
+
+  const closes = points.map((p) => p.c);
+  const first = closes[0];
+  const last = closes[closes.length - 1];
+
+  return {
+    pair,
+    range,
+    points,
+    first,
+    last,
+    min: Math.min(...closes),
+    max: Math.max(...closes),
+    change: first === 0 ? 0 : ((last - first) / first) * 100,
+  };
+}
+
+/**
+ * The handful of ids worth hard-coding.
+ *
+ * Resolving a ticker normally means reading the market list, which puts the
+ * chart behind a second rate-limited request. These are the coins the chart
+ * is actually asked for, and their ids have never changed, so the common path
+ * needs no lookup at all.
+ */
+const WELL_KNOWN_COIN_IDS: Record<string, string> = {
+  BTC: "bitcoin",
+  ETH: "ethereum",
+  SOL: "solana",
+  XRP: "ripple",
+  BNB: "binancecoin",
+  ADA: "cardano",
+  DOGE: "dogecoin",
+};
+
+/**
+ * CoinGecko addresses coins by id, never by ticker.
+ *
+ * The cached market list is the lookup table, and the largest coin wins a
+ * contested ticker — the same rule the leaderboard uses, because tickers are
+ * reused freely by unrelated coins.
+ */
+async function coinIdForSymbol(ticker: string): Promise<string | null> {
+  const known = WELL_KNOWN_COIN_IDS[ticker];
+  if (known) return known;
+
+  const markets = await getMarkets();
+
+  let best: Crypto | null = null;
+  for (const coin of markets) {
+    if (coin.symbol.toUpperCase() !== ticker) continue;
+    if (!best || coin.marketCap > best.marketCap) best = coin;
+  }
+
+  return best?.id ?? null;
+}
+
+/** Close-price series from CoinGecko, for when Binance will not answer. */
+async function seriesFromCoinGecko(
+  ticker: string,
+  pair: string,
+  range: ChartRange,
+): Promise<Series | null> {
+  const id = await coinIdForSymbol(ticker);
+  if (!id) return null;
+
+  try {
+    const res = await fetch(
+      `${COINGECKO}/coins/${id}/market_chart?vs_currency=usd&days=${COINGECKO_RANGE_DAYS[range]}`,
+      { next: { revalidate: SERIES_TTL } },
+    );
+
+    if (!res.ok) {
+      console.error(`CoinGecko market_chart failed for ${id}: ${res.status}`);
+      return null;
+    }
+
+    const raw: unknown = await res.json();
+    const prices = (raw as { prices?: unknown }).prices;
+    if (!Array.isArray(prices)) return null;
+
+    const points: PricePoint[] = (prices as [number, number][])
+      .map(([t, c]) => ({ t, c }))
+      .filter((point) => Number.isFinite(point.c) && Number.isFinite(point.t));
+
+    // A thirty-day span comes back hourly, which is 720 points for a chart
+    // that is drawn 180 wide. Match the Binance budget for the same range.
+    return buildSeries(pair, range, thin(points, CHART_RANGES[range].limit));
+  } catch (error) {
+    console.error(`CoinGecko market_chart threw for ${id}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Close-price series over one of the CHART_RANGES.
+ *
+ * Binance is the preferred source: its intervals are exact and its history is
+ * free of the free tier's rate limit. It is also unreachable from half the
+ * places this app can be deployed — it answers 451 Unavailable For Legal
+ * Reasons to any request that looks like it comes from the US, which includes
+ * every Vercel function in `iad1`. So a failure here is routine rather than
+ * exceptional, and falling back to CoinGecko is the difference between a
+ * chart and an apology.
+ */
 export async function getSeries(symbol: string, range: ChartRange): Promise<Series | null> {
   const ticker = symbol.trim().toUpperCase();
   if (!ticker) return null;
@@ -238,35 +397,25 @@ export async function getSeries(symbol: string, range: ChartRange): Promise<Seri
       { next: { revalidate: SERIES_TTL } },
     );
 
-    if (!res.ok) return null;
+    if (res.ok) {
+      const raw: unknown = await res.json();
 
-    const raw: unknown = await res.json();
-    if (!Array.isArray(raw) || raw.length === 0) return null;
+      if (Array.isArray(raw) && raw.length > 0) {
+        const points: PricePoint[] = (raw as [number, string, string, string, string][])
+          .map(([t, , , , close]) => ({ t, c: parseFloat(close) }))
+          .filter((point) => Number.isFinite(point.c));
 
-    const points: PricePoint[] = (raw as [number, string, string, string, string][])
-      .map(([t, , , , close]) => ({ t, c: parseFloat(close) }))
-      .filter((p) => Number.isFinite(p.c));
-
-    if (points.length < 2) return null;
-
-    const closes = points.map((p) => p.c);
-    const first = closes[0];
-    const last = closes[closes.length - 1];
-
-    return {
-      pair,
-      range,
-      points,
-      first,
-      last,
-      min: Math.min(...closes),
-      max: Math.max(...closes),
-      change: first === 0 ? 0 : ((last - first) / first) * 100,
-    };
+        const series = buildSeries(pair, range, points);
+        if (series) return series;
+      }
+    } else {
+      console.error(`Binance /klines failed for ${pair}: ${res.status}`);
+    }
   } catch (error) {
-    console.error(`Failed to fetch series for ${pair}:`, error);
-    return null;
+    console.error(`Binance /klines threw for ${pair}:`, error);
   }
+
+  return seriesFromCoinGecko(ticker, pair, range);
 }
 
 /* ---------------------------------------------------------------------------
@@ -282,9 +431,9 @@ type CoinGeckoMarketWithSparkline = CoinGeckoMarket & {
   sparkline_in_7d?: { price?: number[] };
 };
 
-/** Downsample to at most `target` evenly spaced points. A 168-point sparkline
+/** Downsample to at most `target` evenly spaced items. A 168-point sparkline
  *  renders at ~80px wide, so most of those points land on the same pixel. */
-function thin(values: number[], target: number): number[] {
+function thin<T>(values: T[], target: number): T[] {
   if (values.length <= target) return values;
   const step = (values.length - 1) / (target - 1);
   return Array.from({ length: target }, (_, i) => values[Math.round(i * step)]);

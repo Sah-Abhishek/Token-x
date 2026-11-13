@@ -38,6 +38,22 @@ npm run db:migrate         # deploy: apply pending migrations (migrate deploy)
 npm run db:studio          # browse the data
 ```
 
+### Testing the engine
+
+```bash
+./scripts/dev-db.sh start && npm run db:migrate
+npm run test:engine
+```
+
+45 assertions over every path that touches the database: the cash a limit
+order reserves, fills and the one-cent floor, cancellation refunds, rejected
+input, the watchlist, the games, and the leaderboard's ordering. It creates a
+single `demo_`-prefixed account and deletes it on the way out.
+
+Steps that need a live price are skipped, not failed, when the free CoinGecko
+tier rate-limits. That is deliberate: refusing to act without a price is the
+behaviour under test everywhere else, so a 429 is not a regression.
+
 ## Deploying to Vercel
 
 1. Import the repo in Vercel. Framework preset: Next.js. Build command and
@@ -55,6 +71,33 @@ npm run db:studio          # browse the data
    Add endpoint**, URL `https://<your-domain>/api/webhooks/user`, subscribed to
    `user.created`, `user.updated` and `user.deleted`. Copy the signing secret
    into `WEBHOOK_SECRET` and redeploy.
+
+### Vercel blocks deploys on vulnerable dependencies
+
+A build can go green and the deployment still fail. The log ends:
+
+```
+Build Completed in /vercel/output [1m]
+Deploying outputs...
+Build cache cleared after a dependency security block. Redeploy to build with a clean cache.
+Vulnerable version of Next.js detected, please update immediately.
+status  ● Error
+```
+
+Nothing in the app is wrong when this happens — the gate runs after the build
+and refuses to publish the output. The fix is to upgrade, not to retry:
+
+```bash
+npm install next@latest eslint-config-next@latest
+npm audit                     # confirm no critical advisories remain
+npm run build && npm run test:engine
+```
+
+Next.js ships security releases often, and the advisories that trip this gate
+have included unauthenticated RCE in the image optimizer. Keeping `next` on
+the current patch of its line is maintenance, not optional. The 15.x backport
+line is published under the `backport` dist-tag:
+`npm view next dist-tags`.
 
 Notes that matter for the serverless runtime:
 

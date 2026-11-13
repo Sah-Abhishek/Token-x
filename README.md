@@ -117,8 +117,18 @@ Resting orders are re-priced:
 - whenever that user reads `/api/orders` or opens `/dashboard`, which is what
   makes fills work with no scheduler at all, and
 - by `GET /api/orders/run` for everyone, when `CRON_SECRET` is set.
-  `vercel.json` schedules it every five minutes. **Vercel's Hobby plan runs
-  crons once a day**, so on Hobby the read path above is the one that matters.
+
+**The cron schedule in `vercel.json` is `0 3 * * *`, once a day, because
+that is the most the Hobby plan allows.** A more frequent expression is not
+downgraded, it fails the deployment outright:
+
+> Hobby accounts are limited to daily cron jobs. This cron expression
+> (`*/5 * * * *`) would run more than once per day.
+
+On Pro, change it to `*/5 * * * *` and nothing else needs to move. A daily
+sweep is not much use on its own, which is the point of the read path above:
+an order fills the moment its owner looks at it, and the schedule only exists
+for accounts nobody has opened in a while.
 
 Every balance and holding change is a guarded `updateMany` with the condition
 in the `WHERE` clause, so the check and the write are one statement and two

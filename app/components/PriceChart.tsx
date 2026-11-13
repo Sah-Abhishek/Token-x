@@ -1,156 +1,182 @@
-import React, { useEffect, useState } from "react";
-import { FaChartLine } from "react-icons/fa6";
-import { MdOutlineCandlestickChart } from "react-icons/md";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, TooltipProps } from "recharts";
-import { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
+"use client";
 
-type TimeFilter = "1M" | "5M" | "15M" | "1H" | "4H" | "1D" | "1W";
+import React, { useEffect, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  type TooltipProps,
+} from "recharts";
+import type { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
+import ChartToolbar, { type TimeFilter, timeFilterToInterval } from "./ChartToolbar";
+import { formatUsd } from "../lib/format";
 
 interface ChartData {
-  date: string;
+  label: string;
   value: number;
   tooltipDate: string;
-  tooltipValue: string;
 }
 
 interface PriceChartProps {
+  /** Coin ticker, e.g. "eth". Resolved to a Binance pair as <SYMBOL>USDT. */
+  symbol: string;
   selectedChart: string;
   handleChartSelection: (chart: string) => void;
 }
 
-const timeFilterToInterval: Record<TimeFilter, string> = {
-  "1M": "1m",
-  "5M": "5m",
-  "15M": "15m",
-  "1H": "1h",
-  "4H": "4h",
-  "1D": "1d",
-  "1W": "1w",
-};
+/** Intraday intervals need a time-of-day axis label; the old code formatted
+ *  every point as YYYY-MM-DD, so a 1m chart showed the same label 50 times. */
+const INTRADAY: TimeFilter[] = ["1M", "5M", "15M", "1H", "4H"];
 
-const PriceChart: React.FC<PriceChartProps> = ({ selectedChart, handleChartSelection }) => {
+const axisLabel = (date: Date, filter: TimeFilter): string =>
+  INTRADAY.includes(filter)
+    ? date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+    : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+const PriceChart: React.FC<PriceChartProps> = ({
+  symbol,
+  selectedChart,
+  handleChartSelection,
+}) => {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("1D");
   const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+  const [unavailable, setUnavailable] = useState(false);
 
-  const fetchBitcoinData = async (filter: TimeFilter) => {
-    setLoading(true);
-    try {
-      const interval = timeFilterToInterval[filter];
-      const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=50`;
-
-      const response = await fetch(url);
-      const data: [number, string, string, string, string][] = await response.json(); // Explicit tuple type
-
-      const formattedData: ChartData[] = data.map(([timestamp, , , , closePrice]) => {
-        const date = new Date(timestamp);
-        return {
-          date: date.toISOString().slice(0, 10),
-          value: parseFloat(closePrice),
-          tooltipDate: date.toLocaleString(),
-          tooltipValue: parseFloat(closePrice).toFixed(2),
-        };
-      });
-
-      setChartData(formattedData);
-    } catch (error) {
-      console.error("Error fetching Bitcoin data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const pair = symbol ? `${symbol.toUpperCase()}USDT` : "";
 
   useEffect(() => {
-    fetchBitcoinData(timeFilter);
-  }, [timeFilter]);
+    if (!pair) return;
 
-  const handleTimeFilterChange = (filter: TimeFilter) => {
-    setTimeFilter(filter);
-  };
+    const controller = new AbortController();
 
-  const timeFilters: TimeFilter[] = ["1M", "5M", "15M", "1H", "4H", "1D", "1W"];
+    const fetchSeries = async () => {
+      setLoading(true);
+
+      try {
+        const interval = timeFilterToInterval[timeFilter];
+        const response = await fetch(
+          `https://api.binance.com/api/v3/klines?symbol=${pair}&interval=${interval}&limit=200`,
+          { signal: controller.signal },
+        );
+
+        if (!response.ok) {
+          setUnavailable(true);
+          setChartData([]);
+          return;
+        }
+
+        const data: [number, string, string, string, string][] = await response.json();
+        if (!Array.isArray(data) || data.length === 0) {
+          setUnavailable(true);
+          setChartData([]);
+          return;
+        }
+
+        setUnavailable(false);
+        setChartData(
+          data.map(([timestamp, , , , closePrice]) => {
+            const date = new Date(timestamp);
+            return {
+              label: axisLabel(date, timeFilter),
+              value: parseFloat(closePrice),
+              tooltipDate: date.toLocaleString(),
+            };
+          }),
+        );
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Error fetching price data:", error);
+          setUnavailable(true);
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+
+    fetchSeries();
+    return () => controller.abort();
+  }, [timeFilter, pair]);
 
   const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const { tooltipDate, tooltipValue } = payload[0].payload as ChartData;
-      return (
-        <div className="glass p-4 rounded-lg shadow-sm border border-gray-100 animate-fade-in">
-          <p className="text-sm text-gray-600">{tooltipDate}</p>
-          <p className="text-green-600 font-medium">Value: ${tooltipValue}</p>
-        </div>
-      );
-    }
-    return null;
+    if (!active || !payload?.length) return null;
+    const { tooltipDate, value } = payload[0].payload as ChartData;
+
+    return (
+      <div className="bg-surface p-3 rounded-lg shadow-md border border-line">
+        <p className="text-xs text-ink-muted mb-0.5">{tooltipDate}</p>
+        <p className="font-medium text-ink" data-numeric>
+          {formatUsd(value)}
+        </p>
+      </div>
+    );
   };
 
   return (
-    <div className="w-full bg-white p-4 rounded-lg shadow-sm border border-gray-100 animate-fade-in">
-      {/* Top Bar: Time Filters (Left) & Chart Selection Icons (Right) */}
-      <div className="flex justify-between items-center mb-4">
-        {/* Time Filters */}
-        <div className="flex space-x-2 overflow-x-auto pb-2">
-          {timeFilters.map((filter) => (
-            <button
-              key={filter}
-              onClick={() => handleTimeFilterChange(filter)}
-              className={`px-3 py-1 text-xs rounded-md transition-all ${timeFilter === filter ? "bg-black text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
+    <div className="w-full bg-surface p-4 rounded-lg border border-line animate-fade-in">
+      <ChartToolbar
+        pair={pair}
+        timeFilter={timeFilter}
+        onTimeFilterChange={setTimeFilter}
+        selectedChart={selectedChart}
+        onChartSelection={handleChartSelection}
+      />
 
-        {/* Chart Selection Icons */}
-        <div className="flex space-x-2">
-          <button
-            onClick={() => handleChartSelection("line")}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${selectedChart === "line" ? "bg-gray-900 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-          >
-            <FaChartLine size={18} />
-          </button>
-
-          <button
-            onClick={() => handleChartSelection("candlestick")}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${selectedChart === "candlestick" ? "bg-gray-900 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-          >
-            <MdOutlineCandlestickChart size={18} />
-          </button>
-        </div>
-      </div>
-
-      {/* Chart */}
       <div className="h-80 w-full">
-        {loading ? (
-          <p className="text-center text-gray-500">Loading...</p>
+        {loading || !pair ? (
+          <div className="h-full flex items-center justify-center">
+            <p className="text-ink-muted animate-pulse-subtle">Loading chart…</p>
+          </div>
+        ) : unavailable ? (
+          <div className="h-full flex flex-col items-center justify-center text-center bg-surface-sunken rounded-md">
+            <p className="font-medium mb-1">No price history for this pair</p>
+            <p className="text-sm text-ink-muted max-w-xs">
+              {pair} is not listed on Binance, so there is no candle feed for it yet.
+            </p>
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
               <defs>
-                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#16a34a" stopOpacity={0.2} />
                   <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis
-                dataKey="date"
+                dataKey="label"
                 axisLine={false}
                 tickLine={false}
                 tickMargin={10}
-                tick={{ fontSize: 10, fill: "#94a3b8" }}
+                minTickGap={40}
+                tick={{ fontSize: 10, fill: "#6b7280" }}
               />
               <YAxis
-                domain={["dataMin - 500", "dataMax + 500"]}
+                // Relative padding. A hardcoded ±500 made sub-dollar assets
+                // render as a flat line pinned to the middle of the chart.
+                domain={[
+                  (min: number) => min * 0.995,
+                  (max: number) => max * 1.005,
+                ]}
                 axisLine={false}
                 tickLine={false}
                 tickMargin={10}
-                tick={{ fontSize: 10, fill: "#94a3b8" }}
-                width={50}
+                tick={{ fontSize: 10, fill: "#6b7280" }}
+                tickFormatter={(value: number) => formatUsd(value)}
+                width={80}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="value" stroke="#16a34a" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#16a34a"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#priceGradient)"
+              />
             </AreaChart>
           </ResponsiveContainer>
         )}

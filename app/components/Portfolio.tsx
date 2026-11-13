@@ -1,32 +1,103 @@
+"use client";
 
+import React from "react";
+import Link from "next/link";
+import type { Position } from "../lib/portfolio";
+import { formatUsd, formatAmount, formatPercent, signalTextClass } from "../lib/format";
 
-import React from 'react';
+interface PortfolioProps {
+  symbol: string;
+  position: Position | null;
+  signedIn: boolean;
+  loading: boolean;
+  unavailable: string | null;
+}
 
-const Portfolio: React.FC = () => {
+const Portfolio: React.FC<PortfolioProps> = ({
+  symbol,
+  position,
+  signedIn,
+  loading,
+  unavailable,
+}) => {
+  const ticker = symbol || "this coin";
+
+  const body = () => {
+    if (unavailable) {
+      return <p className="text-sm text-ink-muted">{unavailable}</p>;
+    }
+
+    if (!signedIn) {
+      return (
+        <p className="text-sm text-ink-muted">
+          Sign in to see what you hold in {ticker}.
+        </p>
+      );
+    }
+
+    if (loading && !position) {
+      return <p className="text-sm text-ink-muted animate-pulse-subtle">Loading your position…</p>;
+    }
+
+    if (!position) {
+      return (
+        <p className="text-sm text-ink-muted">
+          You do not hold any {ticker} yet. A buy order opens a position.
+        </p>
+      );
+    }
+
+    return (
+      <>
+        <dl className="space-y-3 text-sm">
+          <div className="flex justify-between items-center">
+            <dt className="text-ink-muted">Amount held</dt>
+            <dd className="font-mono font-medium" data-numeric>
+              {formatAmount(position.amount)} {position.symbol}
+            </dd>
+          </div>
+          <div className="flex justify-between items-center">
+            <dt className="text-ink-muted">Average cost</dt>
+            <dd className="font-mono font-medium" data-numeric>
+              {formatUsd(position.avgCost)}
+            </dd>
+          </div>
+          <div className="flex justify-between items-center">
+            <dt className="text-ink-muted">Market value</dt>
+            <dd className="font-mono font-medium" data-numeric>
+              {formatUsd(position.value)}
+            </dd>
+          </div>
+          <div className="flex justify-between items-center border-t border-line pt-3">
+            <dt className="text-ink-muted">Profit / loss</dt>
+            <dd className={`font-mono font-medium ${signalTextClass(position.pnl)}`} data-numeric>
+              {position.pnl >= 0 ? "+" : ""}
+              {formatUsd(position.pnl)} ({formatPercent(position.pnlPct)})
+            </dd>
+          </div>
+        </dl>
+
+        {!position.priced && (
+          <p className="mt-4 text-xs text-ink-muted">
+            No live price matched {position.symbol}, so the value shown is at cost.
+          </p>
+        )}
+      </>
+    );
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 animate-fade-in">
-      <h2 className="text-xl font-semibold mb-4">Your Portfolio</h2>
-
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600">Amount Held</span>
-          <span className="font-medium">0.015 BTC</span>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600">Value</span>
-          <span className="font-medium">$1298.70</span>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className="text-gray-600">Profit/Loss</span>
-          <span className="text-green-600 font-medium">+15.2%</span>
-        </div>
+    <div className="bg-surface rounded-lg border border-line p-6">
+      <div className="flex items-baseline justify-between mb-4">
+        <h2 className="text-xl font-semibold">Your position</h2>
+        {signedIn && !unavailable && (
+          <Link href="/dashboard" className="text-xs text-ink-muted hover:text-ink underline underline-offset-4 decoration-line-strong">
+            Dashboard
+          </Link>
+        )}
       </div>
 
-      <button className="w-full mt-6 py-3 bg-gray-200 text-gray-800 font-medium rounded-md hover:bg-gray-300 transition-colors">
-        Sell Now
-      </button>
+      {body()}
     </div>
   );
 };

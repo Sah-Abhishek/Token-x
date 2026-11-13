@@ -1,26 +1,211 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   TokenX design system
+   --------------------------------------------------------------------------
+   Monochrome, data-first. Ink (near-black) carries all primary action;
+   colour is reserved exclusively for market signal (up / down).
+   The app is intentionally light-only: every surface is explicit, so a
+   prefers-color-scheme flip would invert the chrome and leave content light.
+   ========================================================================== */
+
+@theme {
+  /* --- Surfaces -------------------------------------------------------- */
+  --color-surface: #ffffff;        /* cards, panels, table rows */
+  --color-surface-sunken: #f9fafb; /* page background behind cards */
+  --color-surface-raised: #f3f4f6; /* hover, secondary buttons, inert fields */
+
+  /* --- Ink ------------------------------------------------------------- */
+  --color-ink: #111827;            /* headings + primary buttons */
+  --color-ink-body: #374151;       /* body copy */
+  --color-ink-muted: #6b7280;      /* labels, captions, metadata */
+  --color-ink-inverse: #ffffff;    /* text on ink surfaces */
+
+  /* --- Lines ----------------------------------------------------------- */
+  --color-line: #f3f4f6;           /* card borders — barely there by design */
+  --color-line-strong: #d1d5db;    /* inputs, dividers that must read */
+
+  /* --- Market signal (the only hues in the system) --------------------- */
+  --color-up: #16a34a;
+  --color-up-surface: #f0fdf4;
+  --color-down: #dc2626;
+  --color-down-surface: #fef2f2;
+
+  /* --- Type ------------------------------------------------------------ */
+  /* Bricolage Grotesque carries the page's voice; Geist was the Next.js
+     default and read as such. IBM Plex Mono is used for numerals only, where
+     tabular figures are functional rather than decoration. */
+  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  /* --- Easing ---------------------------------------------------------- */
+  /* The built-in CSS easings are too weak to read as intentional. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* --- Motion ---------------------------------------------------------- */
+  /* Referenced as `animate-fade-in` / `animate-fade-in-up` in components.
+     These were previously used but never defined, so they did nothing. */
+  --animate-fade-in: fade-in 0.35s var(--ease-out-strong) both;
+  --animate-fade-in-up: fade-in-up 0.4s var(--ease-out-strong) both;
+  --animate-pulse-subtle: pulse-subtle 2s ease-in-out infinite;
+
+  /* The landing page's single orchestrated load moment: the chart draws
+     itself while the surrounding type settles. Used nowhere else, so the
+     page does not read as scattered scroll-triggered effects. */
+  --animate-draw: draw 1.1s var(--ease-in-out-strong) both;
+  --animate-rise: rise 0.5s var(--ease-out-strong) both;
+  --animate-area: area 0.6s var(--ease-out-strong) 0.45s both;
+
+  /* Constant motion, so linear: any easing would make the tape visibly
+     surge and slow. */
+  --animate-ticker: ticker var(--ticker-duration, 64s) linear infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* Draws an SVG path by retracting its dash offset. The path sets its own
+   --len from its measured length. */
+@keyframes draw {
+  from { stroke-dashoffset: var(--len, 1000); }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes area {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* The track holds two identical copies of the list, so travelling exactly
+   half its width lands back on an identical frame and the loop is seamless. */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Honour the OS reduced-motion preference across the whole system. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  body {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    /* Was `Arial, Helvetica, sans-serif`, which overrode the Geist fonts
+       loaded in layout.tsx and silently discarded them. */
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Prices, balances and quantities must not jitter as digits change. */
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* One consistent focus ring, instead of per-component ad-hoc rings. */
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* One page width for every section, header and footer. These previously
+     disagreed, which showed as the nav and footer sitting inboard of the
+     content. */
+  .shell {
+    width: 100%;
+    max-width: 1600px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    .shell {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  .ticker-track {
+    animation: var(--animate-ticker);
+    will-change: transform;
+  }
+
+  /* Softens both ends of the tape so rows arrive and leave instead of being
+     sliced off at the viewport edge. */
+  .edge-fade-x {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 3rem,
+      #000 calc(100% - 3rem),
+      transparent
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 3rem,
+      #000 calc(100% - 3rem),
+      transparent
+    );
+  }
+
+  /* Let people read a row they are interested in. */
+  @media (hover: hover) and (pointer: fine) {
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+  }
+
+  /* A scrolling tape is the one piece of motion here that never stops, so it
+     is held still outright rather than merely shortened. */
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+      animation: none !important;
+      transform: none !important;
+    }
+  }
+
+  /* Press feedback. Buttons should confirm that the interface heard the
+     click; 160ms ease-out is fast enough to feel like a response. */
+  .press {
+    transition:
+      transform 160ms var(--ease-out-strong),
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .press:active {
+    transform: scale(0.97);
+  }
+
+  /* Touch devices fire :hover on tap, so hover-only motion is gated. */
+  @media (hover: hover) and (pointer: fine) {
+    .lift {
+      transition: background-color 160ms ease;
+    }
+  }
 }

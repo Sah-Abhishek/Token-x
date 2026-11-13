@@ -1,97 +1,72 @@
-import { FaChartLine as ChartIcon } from 'react-icons/fa6';
-import Navbar from '../components/Navbar';
-import ClientSearchAndFilter from '../components/ClientSearchAndFilter';
+import type { Metadata } from "next";
+import Link from "next/link";
+import PageShell from "../components/PageShell";
+import ClientSearchAndFilter from "../components/ClientSearchAndFilter";
+import { getMarkets } from "../lib/market";
 
-type Crypto = {
-  id: string;
-  name: string;
-  symbol: string;
-  price: number;
-  change: string | number;
-  marketCap: string | number;
-  volume: string | number;
-  image: string;
+export const metadata: Metadata = {
+  // The root layout appends "| TokenX" through its title template, so the
+  // title here must not repeat it.
+  title: "Market",
+  description: "Live prices and 24h movement for the top 250 coins.",
 };
 
-const apiUrl = process.env.API_URL; // Access server-side variable
-console.log("This is the apiUrl: ", apiUrl);
+/** Rebuild this page's data at most once a minute. */
+export const revalidate = 60;
 
-// Create a new client component for the interactive search/filter UI
-// ClientSearchAndFilter.tsx - mark with "use client"
-// This will handle the search/filter state and UI
-
-// Create a new client component for the interactive table
-// ClientCryptoTable.tsx - mark with "use client"
-// This will handle sorting and displaying the filtered data
-
-async function getCryptoData() {
-  try {
-    const res = await fetch(`${apiUrl}/api/cryptos`, {
-      headers: {
-        'Cache-Control': 'no-store',  // Prevents caching in the browser and any intermediate cache
-      },
-    });
-    if (!res.ok) {
-      throw new Error('Failed to fetch cryptocurrencies');
-    }
-    const data: Crypto[] = await res.json();
-    // console.log("\nData: ", data, "\n");
-    // Process the data
-    // In your getCryptoData function
-    const updatedData = data?.map(crypto => ({
-      ...crypto,
-      symbol: crypto?.symbol || 'N/A',
-      change: typeof crypto.change === 'string' ? parseFloat(crypto.change) || 0 : Number(crypto.change) || 0,
-      marketCap: typeof crypto.marketCap === 'string' ? parseFloat(crypto.marketCap.replace(/[^0-9.-]+/g, "")) || 0 : Number(crypto.marketCap) || 0,
-      volume: typeof crypto.volume === 'string' ? parseFloat(crypto.volume.replace(/[^0-9.-]+/g, "")) || 0 : Number(crypto.volume) || 0,
-    })) || [];
-
-    return updatedData;
-  } catch (error) {
-    console.error('There was an error fetching the data:', error);
-    return [];
-  }
-}
-
-export default async function Home() {
-  // Server-side data fetching
-  const cryptocurrencies = await getCryptoData();
+export default async function MarketPage() {
+  // Calls the data layer directly. This previously fetched our own
+  // /api/cryptos over HTTP using process.env.API_URL, which meant an unset
+  // API_URL in production rendered an empty table with no error.
+  const cryptocurrencies = await getMarkets();
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      <head>
-        <title>TokenX</title>
-        <meta name="description" content="Simulate cryptocurrency trading without risk" />
-        <link rel="icon" href="/logo-tokenx.png" />
-      </head>
-
-      {/* Navigation Bar */}
-      <Navbar />
-      <main className="container mx-auto py-8 px-6">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold flex items-center mb-2">
-            <span>
-              <ChartIcon className='mr-2' />
-            </span>
-            Live Crypto Market Prices
-          </h1>
-          <p className="text-gray-600">Track real-time prices and trends of top cryptocurrencies.</p>
+    <PageShell>
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-[-0.02em]">Market</h1>
+          <p className="mt-2 text-ink-muted">
+            The top 250 coins by market cap, priced live and refreshed every
+            minute.
+          </p>
         </div>
+        <Link
+          href="/watchlist"
+          className="press rounded-md border border-line-strong px-4 py-2 text-sm text-ink-body hover:bg-surface-raised"
+        >
+          Your watchlist
+        </Link>
+      </header>
 
-        {/* Client-side search and filter component */}
+      {cryptocurrencies.length === 0 ? (
+        <div
+          role="status"
+          className="animate-fade-in rounded-lg border border-line bg-surface p-10 text-center"
+        >
+          <p className="mb-1 font-medium">Market data is temporarily unavailable</p>
+          <p className="text-sm text-ink-muted">
+            The price feed did not respond. Refresh in a moment to try again.
+          </p>
+        </div>
+      ) : (
         <ClientSearchAndFilter cryptocurrencies={cryptocurrencies} />
+      )}
 
-        <div className="mt-16 text-center">
-          <h2 className="text-2xl font-bold mb-6">Ready to Simulate Real Crypto Trading?</h2>
-          <button className="bg-gray-900 text-white px-6 py-3 rounded-md font-medium hover:bg-gray-800 flex items-center mx-auto">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-            </svg>
-            Start Trading Now
-          </button>
-        </div>
-      </main>
-    </div>
+      <section className="mt-16 border-t border-line pt-10">
+        <h2 className="text-2xl font-semibold tracking-[-0.02em]">
+          Open a coin to trade it
+        </h2>
+        <p className="mt-2 max-w-[60ch] text-ink-muted">
+          Every coin has its own chart, an order ticket and your position in
+          it. Orders fill at the live price with virtual money.
+        </p>
+        <Link
+          href="/market/bitcoin"
+          className="press mt-6 inline-block rounded-md bg-ink px-6 py-3 font-medium text-ink-inverse hover:opacity-90"
+        >
+          Trade Bitcoin
+        </Link>
+      </section>
+    </PageShell>
   );
 }

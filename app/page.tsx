@@ -1,136 +1,275 @@
-import Head from 'next/head';
-import Image from 'next/image';
-import { FaChartLine, FaCoins, FaTrophy } from 'react-icons/fa';
-import LiveMarketData from './components/LiveMarketData';
-import Testimonials from './components/Testimonials';
+import type { Metadata } from "next";
+import Link from "next/link";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import CallToAction from "./components/CallToAction";
+import HeroChart from "./components/landing/HeroChart";
+import TopCoins from "./components/landing/TopCoins";
+import TickerTape from "./components/landing/TickerTape";
+import StatsBand from "./components/landing/StatsBand";
+import Movers from "./components/landing/Movers";
+import {
+  getGlobalStats,
+  getMarkets,
+  getMovers,
+  getSeries,
+  getTopCoinsWithSparkline,
+} from "./lib/market";
 
-const Home: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-gray-50 text-black">
-      <Head>
-        <title>TokenX - Practice Crypto Trading Without Risk</title>
-        <meta name="description" content="Simulate real-world crypto trading with real-time market data" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      {/* Navigation */}
-      <Navbar />
-
-      {/* Hero Section */}
-      <section className="py-16 px-6">
-        <div className="container mx-auto flex flex-col md:flex-row items-center">
-          <div className="md:w-1/2 md:pr-10">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Practice Crypto Trading Without Risk!
-            </h1>
-            <p className="text-lg text-gray-600 mb-8">
-              Simulate real-world crypto trading with real-time market data
-              and in-game currency. Learn, trade, and master the market—
-              risk-free!
-            </p>
-            <div className="flex space-x-4">
-              <button className="cursor-pointer bg-gray-900 text-white px-6 py-3 rounded-md font-medium">
-                Start Trading
-              </button>
-              <button className="bg-white border border-gray-300 text-gray-800 px-6 py-3 rounded-md font-medium">
-                Learn More
-              </button>
-            </div>
-          </div>
-          <div className="md:w-1/2 mt-10 md:mt-0">
-            <div className=" rounded-lg flex items-center justify-center text-white">
-              <Image
-                src="/screenshot2.png"
-                alt="Screenshot"
-                height={700}
-                width={700}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Live Market Data Section */}
-      <LiveMarketData />
-
-      {/* Why Choose Section */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-16">Why Choose TokenX?</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="bg-white p-8 rounded-lg border border-gray-100 hover:shadow-lg transition duration-300">
-              <div className="mb-6">
-                <FaChartLine className="text-4xl text-gray-800" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Real-time Market Data</h3>
-              <p className="text-gray-600">
-                Powered by CoinGecko API for accurate market simulation
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="bg-white p-8 rounded-lg border border-gray-100 hover:shadow-lg transition duration-300">
-              <div className="mb-6">
-                <FaCoins className="text-4xl text-gray-800" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Free 5 SOL to Start</h3>
-              <p className="text-gray-600">
-                Begin trading with virtual currency, completely free
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="bg-white p-8 rounded-lg border border-gray-100 hover:shadow-lg transition duration-300">
-              <div className="mb-6">
-                <FaTrophy className="text-4xl text-gray-800" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Leaderboard & Competitions</h3>
-              <p className="text-gray-600">
-                Compete with traders worldwide
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <Testimonials />
-
-      {/* Call to Action Section */}
-
-
-      {/* Floating tools panel */}
-      <Footer />
-      {/* <div className="fixed bottom-6 right-6 flex items-center space-x-2 bg-white p-2 rounded-full shadow-lg"> */}
-      {/*   <button className="p-2 rounded-full bg-gray-900 hover:bg-gray-100"> */}
-      {/*     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> */}
-      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /> */}
-      {/*     </svg> */}
-      {/*   </button> */}
-      {/*   <button className="p-2 rounded-full hover:bg-gray-100"> */}
-      {/*     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> */}
-      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /> */}
-      {/*     </svg> */}
-      {/*   </button> */}
-      {/*   <button className="p-2 rounded-full hover:bg-gray-100"> */}
-      {/*     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> */}
-      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /> */}
-      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /> */}
-      {/*     </svg> */}
-      {/*   </button> */}
-      {/*   <button className="p-2 rounded-full hover:bg-gray-100"> */}
-      {/*     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> */}
-      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /> */}
-      {/*       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /> */}
-      {/*     </svg> */}
-      {/*   </button> */}
-      {/* </div> */}
-    </div>
-  );
+export const metadata: Metadata = {
+  // The root layout appends "| TokenX" via its title template.
+  title: "Practice crypto trading on live prices",
+  description:
+    "Trade crypto at live market prices with a virtual balance. Real data, no real money.",
 };
 
-export default Home;
+export const revalidate = 60;
+
+/** The three states a new account passes through. Each one is shown through
+ *  the value it produces rather than through 01 / 02 / 03 chrome. */
+const STEPS = [
+  {
+    value: "$5,000.00",
+    title: "Your account opens funded",
+    body: "Signing up creates a virtual balance. There is no card and no deposit.",
+  },
+  {
+    value: "0.0724 BTC",
+    title: "You buy at the live price",
+    body: "Orders fill at the market price pulled from Binance and CoinGecko.",
+  },
+  {
+    value: "+$312.40",
+    title: "You watch the position move",
+    body: "Holdings are valued continuously, so gains and losses are the real ones.",
+  },
+];
+
+const LIVE_NOW = [
+  "Live prices and 24h movement for the top 250 coins",
+  "Candlestick and line charts on every listed pair",
+  "Market orders that fill at the live price, and limit orders that rest",
+  "A dashboard with your balance, positions and profit",
+  "A watchlist, a leaderboard, and three side games",
+];
+
+const NOT_YET = [
+  "Spreads, slippage and order book depth: a fill uses one mid price",
+  "Fees, funding and partial fills",
+  "Leverage, margin and anything that can take you below zero",
+];
+
+export default async function Home() {
+  // Every call here is cached server-side, and `getMovers` reads the same
+  // cached market list as the tape, so the whole page costs one CoinGecko
+  // market request and one global request per minute no matter the traffic.
+  const [series, coins, stats, movers, markets] = await Promise.all([
+    getSeries("BTC", "7D"),
+    getTopCoinsWithSparkline(10),
+    getGlobalStats(),
+    getMovers(),
+    getMarkets(),
+  ]);
+
+  return (
+    <div className="min-h-screen bg-surface text-ink">
+      <Navbar />
+      <TickerTape coins={markets.slice(0, 18)} />
+
+      {/* ---------------------------------------------------------------- Hero */}
+      <section className="border-b border-line">
+        <div className="shell grid items-center gap-10 py-12 md:py-16 lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] lg:gap-16">
+          <div>
+            <h1
+              className="animate-rise font-semibold leading-[1.04] tracking-[-0.03em] text-[clamp(2.5rem,5.4vw,3.75rem)]"
+              style={{ animationDelay: "60ms" }}
+            >
+              Practice trading on live market prices with money that isn&rsquo;t real.
+            </h1>
+
+            <p
+              className="animate-rise mt-6 text-lg leading-relaxed text-ink-body max-w-[46ch]"
+              style={{ animationDelay: "140ms" }}
+            >
+              Your account opens with{" "}
+              <span className="font-mono font-medium text-ink" data-numeric>
+                $5,000
+              </span>{" "}
+              of virtual balance. The prices are the ones the market is quoting
+              right now. Nothing here reaches a real exchange, and nothing you
+              lose is real money.
+            </p>
+
+            <div
+              className="animate-rise mt-8 flex flex-wrap gap-3"
+              style={{ animationDelay: "220ms" }}
+            >
+              <Link
+                href="/market"
+                className="press rounded-md bg-ink px-6 py-3 font-medium text-ink-inverse hover:opacity-90"
+              >
+                Open the market
+              </Link>
+              <Link
+                href="/market/bitcoin"
+                className="press rounded-md border border-line-strong px-6 py-3 font-medium text-ink-body hover:bg-surface-raised"
+              >
+                Trade Bitcoin
+              </Link>
+            </div>
+          </div>
+
+          {/* The chart is the product, so it opens the page instead of a
+              screenshot of the product. */}
+          {series ? (
+            <HeroChart initial={series} />
+          ) : (
+            <div className="rounded-xl border border-line bg-surface-sunken p-10 text-center">
+              <p className="font-medium">The price feed is not responding</p>
+              <p className="mt-1 text-sm text-ink-muted">
+                Charts return as soon as it does.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------- Market figures */}
+      {stats && (
+        <section className="border-b border-line">
+          <div className="shell">
+            <StatsBand stats={stats} />
+          </div>
+        </section>
+      )}
+
+      {/* -------------------------------------------------------------- Market */}
+      <section className="border-b border-line">
+        <div className="shell py-14 md:py-20">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-semibold tracking-[-0.02em]">
+                Top coins by market cap
+              </h2>
+              <p className="mt-2 text-ink-muted">
+                Prices refresh every minute. Open any coin for its full chart.
+              </p>
+            </div>
+            <Link
+              href="/market"
+              className="press text-sm px-4 py-2 rounded-md border border-line-strong text-ink-body hover:bg-surface-raised"
+            >
+              All 250 coins
+            </Link>
+          </div>
+
+          <TopCoins coins={coins} />
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------------- Movers */}
+      {(movers.gainers.length > 0 || movers.losers.length > 0) && (
+        <section className="border-b border-line bg-surface-sunken">
+          <div className="shell py-14 md:py-20">
+            <div className="mb-8 max-w-[62ch]">
+              <h2 className="text-3xl font-semibold tracking-[-0.02em]">
+                Today&rsquo;s biggest moves
+              </h2>
+              <p className="mt-2 text-ink-muted">
+                Measured over the last 24 hours, within the hundred largest
+                coins. Smaller caps are left out because a thin market can
+                double on almost no volume.
+              </p>
+            </div>
+
+            <Movers gainers={movers.gainers} losers={movers.losers} />
+          </div>
+        </section>
+      )}
+
+      {/* --------------------------------------------------------- How it works */}
+      <section className="border-b border-line">
+        <div className="shell py-14 md:py-20">
+          <h2 className="text-3xl font-semibold tracking-[-0.02em]">How it works</h2>
+
+          <ol className="mt-10 grid gap-8 md:grid-cols-3 md:gap-6">
+            {STEPS.map((step) => (
+              <li key={step.title} className="border-t-2 border-ink pt-5">
+                <div
+                  className="font-mono text-2xl font-medium tracking-tight"
+                  data-numeric
+                >
+                  {step.value}
+                </div>
+                <h3 className="mt-4 text-lg font-medium">{step.title}</h3>
+                <p className="mt-2 text-ink-muted leading-relaxed">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+
+          <p className="mt-8 text-sm text-ink-muted">
+            Figures above are an illustration of the flow, not a past result.
+          </p>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------- Honesty */}
+      <section className="border-b border-line bg-surface-sunken">
+        <div className="shell grid gap-10 py-14 md:py-20 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] lg:gap-20">
+          <div>
+            <h2 className="text-3xl font-semibold tracking-[-0.02em]">
+              What works today
+            </h2>
+            <p className="mt-3 max-w-[42ch] text-ink-muted">
+              Real prices, fake money, and a short list of things a real
+              exchange does that this one does not.
+            </p>
+            <p className="mt-6 max-w-[42ch] text-sm leading-relaxed text-ink-muted">
+              Orders are simulated end to end. They fill at the price the
+              server reads from the market at that moment, and the result is
+              written to your account, but nothing reaches a real exchange.{" "}
+              <Link href="/how-it-works" className="underline underline-offset-4">
+                The full account of what is and is not simulated.
+              </Link>
+            </p>
+          </div>
+
+          <div className="grid gap-10 sm:grid-cols-2 sm:gap-16">
+            <div>
+              <h3 className="text-sm font-medium text-ink">Working now</h3>
+              <ul className="mt-4 space-y-3">
+                {LIVE_NOW.map((item) => (
+                  <li key={item} className="flex gap-3 text-ink-body">
+                    <span
+                      aria-hidden="true"
+                      className="mt-[0.45em] h-1.5 w-1.5 shrink-0 rounded-full bg-up"
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-ink">Not simulated</h3>
+              <ul className="mt-4 space-y-3">
+                {NOT_YET.map((item) => (
+                  <li key={item} className="flex gap-3 text-ink-muted">
+                    <span
+                      aria-hidden="true"
+                      className="mt-[0.45em] h-1.5 w-1.5 shrink-0 rounded-full bg-line-strong"
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <CallToAction />
+      <Footer />
+    </div>
+  );
+}

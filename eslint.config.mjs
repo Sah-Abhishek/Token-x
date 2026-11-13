@@ -10,6 +10,16 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    // The Prisma client is generated code, not ours to lint. Linting it
+    // produced thousands of errors that failed `next build` outright.
+    ignores: [
+      "app/generated/**",
+      ".next/**",
+      "node_modules/**",
+      "next-env.d.ts",
+    ],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 

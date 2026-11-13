@@ -5,19 +5,147 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
+  provider      = "prisma-client-js"
+  output        = "../app/generated/prisma"
+  // "native" covers local dev. Vercel functions run on Amazon Linux 2023,
+  // which needs the rhel-openssl-3.0.x engine or the client cannot start.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 model User {
-  id         Int      @id @default(autoincrement())
-  externalId String   @unique
+  id         Int       @id @default(autoincrement())
+  externalId String    @unique
+  email      String    @unique
   name       String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  username   String    @unique
+  balanceUSD Decimal   @default(5000.00)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  holdings   Holding[]
+  trades     Trade[]
+  bets       Bet[]
+  orders     LimitOrder[]
+  watchlist  Watchlist[]
+}
+
+model Holding {
+  id        String   @id @default(cuid())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  symbol    String
+  amount    Decimal  @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, symbol])
+}
+
+model Trade {
+  id            String    @id @default(cuid())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  symbol        String
+  amount        Decimal
+  pricePerToken Decimal
+  total         Decimal
+  type          TradeType
+  createdAt     DateTime  @default(now())
+}
+
+/// A resting buy or sell that executes only once the market reaches the
+/// limit price. Cash (for a buy) or tokens (for a sell) are held aside at
+/// placement, so a resting order can never be spent twice.
+model LimitOrder {
+  id          String      @id @default(cuid())
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  /// CoinGecko id. The symbol alone is not unique enough to re-price against.
+  coinId      String
+  symbol      String
+  side        TradeType
+  amount      Decimal
+  limitPrice  Decimal
+  status      OrderStatus @default(OPEN)
+  /// Cash held aside while a BUY rests. Refunded in full on cancel, and in
+  /// part on a fill below the limit.
+  reservedUSD Decimal     @default(0)
+  fillPrice   Decimal?
+  fillTotal   Decimal?
+  tradeId     String?
+  filledAt    DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime    @default(now())
+
+  @@index([status, coinId])
+  @@index([userId, status])
+}
+
+/// Coins a user is following. Keyed by CoinGecko id so the entry survives a
+/// ticker rename.
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  coinId    String
+  symbol    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, coinId])
+  @@index([userId])
+}
+
+model Bet {
+  id          String    @id @default(cuid())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  gameType    GameType
+  betAmount   Decimal
+  outcome     Outcome?
+  payout      Decimal?
+  /// What the player picked: HEADS, TAILS, OVER, UP or DOWN.
+  choice      String?
+  /// Dice only: the number the roll has to beat.
+  target      Decimal?
+  /// What actually happened, kept readable so a bet can be audited.
+  result      String?
+  /// Price prediction only.
+  coinId      String?
+  entryPrice  Decimal?
+  settlePrice Decimal?
+  /// When a resting prediction becomes settleable. Null for instant games.
+  settleAt    DateTime?
+  settledAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([outcome, settleAt])
+}
+
+enum TradeType {
+  BUY
+  SELL
+}
+
+enum OrderStatus {
+  OPEN
+  FILLED
+  CANCELLED
+}
+
+enum GameType {
+  DICE
+  COIN_FLIP
+  PRICE_PREDICTION
+}
+
+enum Outcome {
+  WIN
+  LOSE
+  /// A tie: the stake is returned and nothing is won or lost. A price
+  /// prediction that settles at exactly its entry price lands here.
+  PUSH
 }

@@ -1,9 +1,21 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
-    domains: ['assets.coingecko.com', 'coin-images.coingecko.com'],
+    // `images.domains` is deprecated in Next 15; remotePatterns is the
+    // supported form and is narrower (scheme + path are pinned too).
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "coin-images.coingecko.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "assets.coingecko.com",
+        pathname: "/**",
+      },
+    ],
   },
 };
 

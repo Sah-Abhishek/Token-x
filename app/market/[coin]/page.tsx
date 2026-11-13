@@ -1,164 +1,189 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
-import Image from 'next/image';
+import Image from "next/image";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Star } from "lucide-react";
 import MarketInfo from "@/app/components/Marketinfo";
-import OrderPanel from "@/app/components/OrderPanel";
-import Portfolio from "@/app/components/Portfolio";
+import WatchButton from "@/app/components/WatchButton";
+import TradeSection from "@/app/components/TradeSection";
 import CandleChart from "@/app/components/CandleChart";
 import PriceChart from "@/app/components/PriceChart";
 import Navbar from "@/app/components/Navbar";
+import Footer from "@/app/components/Footer";
+import type { CoinDetail } from "@/app/lib/market";
+import { formatUsd, formatPercent, signalClasses } from "@/app/lib/format";
+
+type ChartKind = "candlestick" | "line";
 
 const CoinPage: React.FC = () => {
-  interface CoinData {
-    id: string;
-    name: string;
-    symbol: string;
-    market_cap: number;
-    total_volume: number;
-    circulating_supply: number;
-    image: string;
-    price_change_percentage_24h: number;
-    coinPrice: number;
-    current_price: number;
-  }
+  const params = useParams<{ coin?: string }>();
+  // The CoinGecko id is already lower-cased and hyphenated in the URL; the
+  // old code upper-cased it and then lower-cased it again on every fetch.
+  const coinId = params?.coin ? decodeURIComponent(params.coin) : "";
 
-  const params = useParams() as { coin?: string }; // ✅ Explicitly define type
-  const coin = params.coin ? params.coin.toUpperCase() : "";
-
-  const [selectedChart, setSelectedChart] = useState<string>("candlestick");
-  const [coinData, setCoinData] = useState<CoinData | null>(null);
+  const [selectedChart, setSelectedChart] = useState<ChartKind>("candlestick");
+  const [coinData, setCoinData] = useState<CoinDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    console.log("Fetching data for:", coin);
+    if (!coinId) return;
+
+    const controller = new AbortController();
 
     const fetchMarketData = async () => {
       setLoading(true);
-      setError(false);
-      try {
-        const formattedCoin = coin.toLowerCase().replace(/\s+/g, '-');
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${formattedCoin}`
-        );
-        const data = await response.json();
+      setNotFound(false);
 
-        if (data.length > 0) {
-          setCoinData(data[0]); // ✅ Store coin data
-        } else {
+      try {
+        // Goes through our cached route rather than calling CoinGecko from
+        // the browser, which previously burned a rate-limit slot per visitor.
+        const res = await fetch(`/api/coin/${encodeURIComponent(coinId)}`, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
           setCoinData(null);
-          setError(true);
+          setNotFound(true);
+          return;
         }
+
+        setCoinData(await res.json());
       } catch (error) {
-        console.error("Error fetching market data:", error);
-        setError(true);
+        if (!controller.signal.aborted) {
+          console.error("Error fetching market data:", error);
+          setNotFound(true);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
-    if (coin) fetchMarketData(); // ✅ Call function when coin changes
-  }, [coin]);
+    fetchMarketData();
+    return () => controller.abort();
+  }, [coinId]);
 
   useEffect(() => {
-    const savedChart = localStorage.getItem("selectedChart");
-    if (savedChart) setSelectedChart(savedChart);
+    const saved = localStorage.getItem("selectedChart");
+    if (saved === "candlestick" || saved === "line") setSelectedChart(saved);
   }, []);
 
-  // console.log("This is the coinData: ", coinData);
   const handleChartSelection = (chartType: string) => {
-    setSelectedChart(chartType);
-    localStorage.setItem("selectedChart", chartType);
+    const kind: ChartKind = chartType === "line" ? "line" : "candlestick";
+    setSelectedChart(kind);
+    localStorage.setItem("selectedChart", kind);
   };
 
-  if (!coin) return <div>Loading...</div>;
-  if (error) return <div>Error fetching data. Please try again.</div>;
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-surface-sunken text-ink flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center px-6">
+          <div className="text-center animate-fade-in">
+            <h1 className="text-2xl font-bold mb-2">We couldn&apos;t find that coin</h1>
+            <p className="text-ink-muted mb-6">
+              {coinId ? (
+                <>
+                  No market data for <span className="font-medium">{coinId}</span>.
+                </>
+              ) : (
+                "No coin was specified."
+              )}
+            </p>
+            <Link
+              href="/market"
+              className="inline-block bg-ink text-ink-inverse px-6 py-3 rounded-md font-medium hover:opacity-90 transition-opacity"
+            >
+              Browse the market
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
-    <div className="text-black min-h-screen bg-gray-50">
+    <div className="text-ink min-h-screen bg-surface-sunken">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8 animate-fade-in">
+
+      <div className="shell py-8">
+        <header className="mb-8 animate-fade-in">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <Image
                   src={coinData?.image || "/default-coin.png"}
-                  alt={coinData?.name || "Coin Image"}
+                  alt=""
                   height={40}
                   width={40}
                   className="rounded-full"
                 />
                 <h1 className="text-2xl font-bold">
-                  {coinData?.name || "Loading..."}
-                  <span className="text-gray-500 ml-1">
-                    ({coinData?.symbol?.toUpperCase() || "N/A"})
-                  </span>
+                  {coinData?.name ?? (loading ? "Loading…" : coinId)}
+                  {coinData?.symbol && (
+                    <span className="text-ink-muted ml-1 font-normal">
+                      ({coinData.symbol.toUpperCase()})
+                    </span>
+                  )}
                 </h1>
               </div>
-              <div className="flex items-center">
+
+              <div className="flex items-center mt-1">
                 {loading ? (
-                  <span className="text-lg">Fetching price...</span>
+                  <span className="text-lg text-ink-muted animate-pulse-subtle">
+                    Fetching price…
+                  </span>
                 ) : (
                   <>
-                    <span className="text-3xl font-semibold mr-3">
-                      ${coinData?.current_price.toLocaleString() || "N/A"}
+                    <span className="text-3xl font-semibold mr-3" data-numeric>
+                      {formatUsd(coinData?.price)}
                     </span>
                     <span
-                      className={`px-2 py-0.5 rounded-md text-sm font-medium ${(coinData?.price_change_percentage_24h ?? 0) < 0  // ✅ Default to 0 if undefined
-                          ? "text-red-600 bg-red-50"
-                          : "text-green-600 bg-green-50"
-                        }`}
+                      className={`px-2 py-0.5 rounded-md text-sm font-medium ${signalClasses(coinData?.change)}`}
+                      data-numeric
                     >
-                      {(coinData?.price_change_percentage_24h ?? 0).toFixed(2)}%  {/* ✅ Prevent undefined */}
+                      {formatPercent(coinData?.change)}
                     </span>
                   </>
                 )}
               </div>
             </div>
 
-            <div className="flex space-x-3">
-              <button className="flex items-center gap-2 py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-                <Star size={18} />
-                <span>Add to Watchlist</span>
-              </button>
-              <button className="py-2 px-6 bg-gray-900 text-white font-medium rounded-md hover:bg-gray-800 transition-colors">
-                Trade Now
-              </button>
+            <div className="flex gap-3">
+              <WatchButton coinId={coinId} />
             </div>
           </div>
-        </div>
+        </header>
 
         <MarketInfo coinData={coinData} />
 
-        {/* Conditionally Render the Selected Chart */}
         <div>
           {selectedChart === "candlestick" ? (
             <CandleChart
+              symbol={coinData?.symbol ?? ""}
               handleChartSelection={handleChartSelection}
               selectedChart={selectedChart}
             />
           ) : (
             <PriceChart
+              symbol={coinData?.symbol ?? ""}
               handleChartSelection={handleChartSelection}
               selectedChart={selectedChart}
             />
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-          <div className="md:col-span-2">
-            <OrderPanel />
-          </div>
-
-          <div>
-            <Portfolio />
-          </div>
-        </div>
+        <TradeSection
+          coinId={coinId}
+          symbol={coinData?.symbol?.toUpperCase() ?? ""}
+          price={coinData?.price ?? 0}
+        />
       </div>
-    </div >
+
+      <Footer />
+    </div>
   );
 };
 
